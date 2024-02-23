@@ -55,23 +55,62 @@ class NewsCrwaler:
         self.client = client
         self.denoiser = Denoiser()
         self.kodex100 = pd.read_csv(kodex100_path)['종목명'].tolist()
+        self.dupli_stock_info = self.get_dupli_stocks_info(self.kodex100)
 
 
-    
+
+    def get_dupli_stocks_info(self, kodex100:List) -> defaultdict:
+        """kodex100 종목 중 단어가 겹치는 종목 정보 저장 뒤에 관련 종목을 선별할 때 사용"""
+        dupli_stock_info = defaultdict(list)
+        for stock_query in kodex100:
+            for stock_check in kodex100:
+                if (stock_query != stock_check) and (stock_query in stock_check):
+                    dupli_stock_info[stock_query].append(stock_check)
+
+        return dupli_stock_info
+
+
     def generate_date_list(self, start_date, end_date)-> List[str]:
-            date_list = []
-            current_date = datetime.strptime(start_date, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        "url에 넣어줄 날짜 정보 생성"
+        date_list = []
+        current_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-            while current_date <= end_date:
-                date_list.append(current_date.strftime('%Y-%m-%d'))
-                current_date += timedelta(days=1)
+        while current_date <= end_date:
+            date_list.append(current_date.strftime('%Y-%m-%d'))
+            current_date += timedelta(days=1)
 
-            return date_list
+        return date_list
+    
     
     def save_crawling_data(self, crawling_info:List[dict], save_dir:str)->None:
+        
         df_crawling = pd.DataFrame(crawling_info)
         df_crawling.to_csv(save_dir, index=False)
+
+
+    def find_relate_stock(self, text:str)-> List:
+        """text 안에 kodex100 종목들이 포함되어 있는지 확인하고 있다면 list로 반환"""
+        relate_stock = []
+        for stock_query in self.kodex100:
+            idx = text.find(stock_query)
+
+            # stock이 text(제목, 내용)에 여러번 등장 할 수 있으므로 모두 체크.
+            while idx >= 0:
+                dupli_flag = False
+                # 종목의 중복을 검토해야하는지 확인. "카카오"가 "카카오뱅크"에서 "카카오"를 추출한건지 확인
+                if stock_query in self.dupli_stock_info:
+                    for stock_check in self.dupli_stock_info[stock_query]:
+                        if stock_check == text[idx:idx+len(stock_check)]:
+                            dupli_flag = True
+                            break
+                
+                if not dupli_flag:
+                    relate_stock.append(stock_query)
+                
+                idx = text.find(stock_query, idx+1)
+        
+        return list(set(relate_stock))
 
 
 
@@ -322,14 +361,15 @@ class NewsCrwaler:
                 contents = self.denoiser.remove_space(contents)
                 date = f"{date.split(' ')[0][0:4]}-{date.split(' ')[0][5:7]}-{date.split(' ')[0][8:10]} {int(date.split(' ')[2][:-3]) + (0 if date.split(' ')[1] == '오전' else 12)}:{date.split(' ')[2][-2:]}"
                 
-                # 뉴스 제목, 내용 안에
-                relate_stock = []
+                # 뉴스 제목, 내용 안에 kodex100 종목이 포함되는지 확인
+                relate_stock_from_title = self.find_relate_stock(title)
+                relate_stock_from_contents = self.find_relate_stock(contents)
 
-                for stock in self.kodex100:
-                    if (stock in title) or (stock in contents):
-                        relate_stock.append(stock)
+                relate_stock = list(set(relate_stock_from_title + relate_stock_from_contents))
                 
-                crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date})
+                # 관련 종목이 있는 경우에만 저장
+                if relate_stock:
+                    crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date})
             except:
                 continue
 
@@ -366,7 +406,7 @@ async def main(startdate, enddate):
 
 if __name__ == "__main__":
     startdate = '2024-02-13'
-    enddate = '2024-02-14'
+    enddate = '2024-02-23'
 
 
     asyncio.run(main(startdate, enddate))
