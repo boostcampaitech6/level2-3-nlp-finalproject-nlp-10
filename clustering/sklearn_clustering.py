@@ -7,6 +7,10 @@ Original file is located at
     https://colab.research.google.com/drive/13FviFcV79EEi27QRtoOxYXLRwX-_NXMa
 """
 
+!pip install transformers
+!pip install rank_bm25
+!pip install konlpy
+
 import sklearn
 import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -50,7 +54,7 @@ print(idx)
 import re
 
 news_contexts = news['contents']
-print(news_contexts[6])
+print(news_contexts[956])
 
 def remove_space(text):
     text = re.sub(r'\s+', ' ', text)
@@ -145,6 +149,10 @@ def remove_from_back_third_triangle(news):
 def remove_float(news):
     return re.sub(r'[0-9]+.[0-9]*',' ', news)
 
+def remove_journalist(news):
+    return re.sub(r'[가-핳]{2,4}\s+기자[^가-핳]+',' ', news)
+
+
 def pre_processing(txt):
     txt = remove_to_callback(txt)
     txt = remove_from_back_third_triangle(txt)
@@ -158,6 +166,7 @@ def pre_processing(txt):
     txt = remove_between_curly_brackets(txt)
     txt = remove_between_square_brackets(txt)
     txt = remove_between_angle_brackets(txt)
+    txt = remove_journalist(txt)
     txt = remove_float(txt)
     txt = remove_symbol(txt)
     txt = remove_space(txt)
@@ -165,9 +174,9 @@ def pre_processing(txt):
 
 news_contexts = list(map(pre_processing, news_contexts))
 
-print(news_contexts[6])
+print(news_contexts[956])
 #print(len(tokenizer.tokenize(news_contexts[6])))
-print(len(okt.morphs(news_contexts[6])))
+print(len(okt.morphs(news_contexts[956])))
 
 # print(news_contexts[6])
 # print(tokenizer.tokenize(news_contexts[6]))
@@ -220,7 +229,7 @@ print(len(context_vector))
 print(len(context_vector[0]), len(context_vector[100]), len(context_vector[1000]))
 print(context_vector[2])
 
-model = DBSCAN(eps=0.7, min_samples=5, metric = "cosine")
+model = DBSCAN(eps=0.6, min_samples=3, metric = "cosine")
 result = model.fit_predict(context_vector)
 train_extract={}
 train_extract['cluster1st'] = result
@@ -236,8 +245,8 @@ print(sorted(counter.items(), reverse=True, key = lambda x: x[1]))
 
 #for i,_ in sorted(counter.items(), reverse=True, key = lambda x: x[1]):
 
-for i, c in enumerate(result[:5000]):
-  if c==14:
+for i, c in enumerate(result):
+  if c==27:
 
     print('idx:', i,'  -> ', news_contexts[i])
     #print('length :',len(tokenizer.tokenize(news_contexts[i])))
