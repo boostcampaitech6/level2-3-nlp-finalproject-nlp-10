@@ -1,0 +1,62 @@
+######
+서버 실행 방법 :
+uvicorn app:main --reload를 cli에 입력하면 서버 실행된다.
+
+######
+백엔드 API 테스트 :
+postman이나 advanced Rest Client로 API가 제대로 기능하는지 테스트해볼 수 있다.
+이거 안쓰면 DB 직접 보거나 화면에 찍어봐야해서 좀 불편함. 그냥 쓰는게 편함.
+
+######
+흐름 (이 순서대로 개발하면 됨):
+api <- service <- repository <- orm
+
+orm: DB table을 객체로 가져온다. 
+repository: ORM(DB에 저장된 데이터를 가져온 객체)를 조작하는 DML 작성. (select, add, delete 이런거) 
+service: 그 repository로 가져온 데이터를 어떻게 활용할 지 구체적인 로직 작성.
+api: 프론트로 부터 request를 받아 parameter 형태로 service에 보내주고, 그 service가 처리한 값을 response로 프론트에 반환
+
+######
+./database/connection :
+DB 객체 생성, session 생성 담당 (DB 연결)
+
+######
+./database/orm :
+DB table 객체 생성
+
+######
+./schema :
+request와 response할 때, orm에 직접 접근하면 DB 보안에 문제가 생기기 때문에
+request와 response 객체를 만들어 사용.
+service layer에서 repository로 가져온 orm값을 schema에 있는 request 또는 response에 할당해줘서 사용해서 직접 orm과 DB에 접근하는 것을 방지한다.
+
+######
+./repository :
+DB table 객체를 활용하여 DML 작성 
+예를 들어, company_id="삼성"인 데이터들을 가져온다.
+
+######
+./service :
+repository에서 생성한 객체를 처리.
+예를 들어, repository가 company_id="삼성"인 데이터들을 가져왔다면 그것들을 어떻게 사용할지 로직을 작성한다.
+또한, orm을 schema로 변경해줘서 반환
+
+######
+./api :
+라우팅해준다. 
+또한, request를 받아서 service layer로 넘겨주고, service layer에서 처리한 값을 response에 할당해 반환한다. 
+아래의 자바 코드로 예를 들면, 
+웹에서 "/update-room" 주소 값으로 가면 해당 함수를 수행한다.
+프론트엔드에서 보낸 request를 parameter로 받는다. (request는 복잡한 값이 아니라 그냥 id, name, title 이런 식으로 단순한 값이다. 프론트에서 id, name, title이 필요하니 달라고 하는 거다.)
+그 request 값을 service layer에 파라미터로 넘겨준다.
+service layer에서는 그 request를 처리해준다.
+처리한 값을 response로 반환한다.
+response를 return해줌으로써 완료된다.
+(request -> service -> response로 값 주고 받을 때는 orm에 직접 접근하지 말고 schema 객체에 할당해서 사용해야 한다.)
+
+    @PostMapping("/update-room")
+    public ResponseEntity<UpdateRoomResponse> updateRoom(@RequestBody UpdateRoomRequest request) {
+        RoomDto roomDto = roomService.updateRoom(request.roomCUDto(), request.getRoomId());
+        UpdateRoomResponse res = roomDto.updateRoomResponse();
+        return ResponseEntity.ok(res);
+    }
