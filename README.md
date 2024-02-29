@@ -21,7 +21,7 @@ npm install -g create-react-app <br /><br />
 
 
 CLI에서 frontend repo로 이동해서 npm start를 입력해주면 실행. <br /><br />
-CLI에서 frontend repo로 이동한 후, npm start를 입력하면 실행.<br />
+
 pages repo에 페이지 생성, 페이지에 필요한 component는 components repo에서 생성해서 가져다 쓰면 됨 <br />
 화면에 띄워주려면 라우팅해줘야 하는데 Router.js에 이런 식으로 추가해주면 라우팅 됨. <Route path="/" element={<Allnews />} /> <br />
 
