@@ -62,16 +62,3 @@ if args.do_eval:
     print(f'Validation Start!')
     #print(f'\n{model.state_dict()=}\n')
     validation(model, model_name, device)
-
-
-
-
-
-
-
-
-
-    
-
-
-
