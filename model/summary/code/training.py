@@ -82,7 +82,7 @@ def training(args, model_name, device):
             model.zero_grad()
         
             if global_step%500==0:
-                print(f' training{loss=}')
+                print(f'{global_step=} training{loss=}')
 
             global_step+=1
 
@@ -91,12 +91,11 @@ def training(args, model_name, device):
     return model
 
 def validation(model, model_name, device):
-    # valid_data = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
-    # valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
-    # valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
-    # valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
-    valid_data = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
-    # valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
+    valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
+    valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
+    valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
+    valid_data4 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
+    valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
 
     rouge = Rouge()
     model.to(device)
