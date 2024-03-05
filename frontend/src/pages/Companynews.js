@@ -47,8 +47,6 @@ const news = [
   "5년 타면 유류비 800만원 절약…아이오닉6, 美서 일냈다",
   "4일 현대차에 따르면 아이오닉6 롱레인지 후륜 모델(18인치 휠, 복합연비 140MPGe)은 ",
   "이 아파트는 1998년 준공한 4509가구 규모 대단지 아파트다. 지하철 4호선과 우이신설경전철이 ",
-  "윤 대통령은 기계·금속 등 대구가 강점이 있는 전통 산업 토대 위에 로봇, 미래 모빌리티 산업을 집중 육성하겠다고 밝혔다",
-  "또한 수성 알파시티를 국가 디지털혁신지구로 지정해 제조업과 디지털의 융합을 이끄는 R&D의 핵심 거점으로 만들겠다고 말했다.",
 ];
 
 const title = "삼성전자, MVC 열리는 바르셀로나서 갤S24 체험관 운영";
@@ -62,7 +60,7 @@ const newsList = [
   "3일 한국거래소에 따르면 지난주 삼성전자는 7만3400원에 거래를 마쳤습니다. 올 들어 주가가 7.8% 떨어졌습니다. 작년 5월 말부터 7만원 박스권에 갇혔습니다.",
 ];
 
-function Allnews() {
+function Companynews() {
   const [date, setDate] = useState("");
 
   const handleChangeDate = (event) => {
@@ -192,7 +190,59 @@ function Allnews() {
                   <Grid sm={7}></Grid>
 
                   {/* 우측 상단 dropout (date, company) */}
-                  <Grid sm={2}></Grid>
+                  <Grid sm={2}>
+                    <Box sx={{ display: "flex", pt: 0 }}>
+                      <Grid container sx={{ pt: 0 }}>
+                        <Grid sm={6} xs={12} sx={{ p: 0.8, pt: 0 }}>
+                          <Box sx={{ minWidth: 50, p: 1 }}>
+                            <FormControl
+                              fullWidth
+                              sx={{ backgroundColor: "white" }}
+                            >
+                              <InputLabel id="demo-simple-select-label">
+                                Date
+                              </InputLabel>
+                              <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={date}
+                                label="Date"
+                                onChange={handleChangeDate}
+                              >
+                                <MenuItem value={10}>하루</MenuItem>
+                                <MenuItem value={20}>일주일</MenuItem>
+                                <MenuItem value={30}>한 달</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Box>
+                        </Grid>
+                        <Grid sm={6} xs={12} sx={{ p: 0.8, pt: 0 }}>
+                          <Box sx={{ minWidth: 50, p: 1 }}>
+                            <FormControl
+                              fullWidth
+                              sx={{ backgroundColor: "white" }}
+                            >
+                              <InputLabel id="demo-simple-select-label">
+                                Company
+                              </InputLabel>
+                              <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={company}
+                                label="Company"
+                                onChange={handleChangeCompany}
+                              >
+                                <MenuItem value={10}>삼성</MenuItem>
+                                <MenuItem value={20}>LG에너지솔루션</MenuItem>
+                                <MenuItem value={30}>SK 하이닉스</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Box>
+                        </Grid>
+                        <Grid sm={8} xs={6} sx={{ p: 0.8 }}></Grid>
+                      </Grid>
+                    </Box>
+                  </Grid>
                 </Grid>
               </Box>
             </Box>
@@ -230,11 +280,42 @@ function Allnews() {
                       pl: 1.3,
                     }}
                   >
-                    오늘의 뉴스 Top5
+                    오늘의 뉴스 Top3
                   </Typography>
                 </Box>
 
                 {/* 뉴스 기사 제목 */}
+                <Box sx={{ p: 2 }}>
+                  <Paper className={styles.paper} sx={{ minHeight: "150px" }}>
+                    <Box sx={{ p: 1.5 }}>
+                      {news.map((it) => (
+                        <Typography sx={{ p: 0.3, fontFamily: "omyu_pretty" }}>
+                          - {it}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Paper>
+                </Box>
+
+                {/* 어제의 뉴스 제목 */}
+
+                <Box sx={{ display: "flex", mt: 3 }}>
+                  <IconContext.Provider value={{ size: "25px" }}>
+                    <FaBackward />
+                  </IconContext.Provider>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: "KOTRAHOPE",
+                      fontWeight: "normal",
+                      pl: 1.3,
+                    }}
+                  >
+                    어제의 뉴스 Top3
+                  </Typography>
+                </Box>
+
+                {/*어제의 뉴스 기사 제목 */}
                 <Box sx={{ p: 2 }}>
                   <Paper className={styles.paper} sx={{ minHeight: "150px" }}>
                     <Box sx={{ p: 1.5 }}>
@@ -268,9 +349,9 @@ function Allnews() {
 
                 <Box sx={{ p: 1 }}>
                   <Paper
+                    elevation={3}
                     // className={styles.paper}
                     // elevation={0}
-                    elevation={3}
                     sx={{
                       minHeight: "200px",
                       // borderRadius: "20px",
@@ -373,6 +454,7 @@ function Allnews() {
                             sx={{
                               fontFamily: "omyu_pretty",
                               textAlign: "center",
+                              color: "#3f50b5",
                             }}
                           >
                             # {it}
@@ -408,4 +490,4 @@ function Allnews() {
     </>
   );
 }
-export default Allnews;
+export default Companynews;
