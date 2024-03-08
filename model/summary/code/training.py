@@ -7,7 +7,7 @@ import random
 from argparse import ArgumentParser
 from tqdm import tqdm, trange
 import json
-from data_load import load_dataset
+from data_load import load_dataset, pd_load_dataset
 from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
 from make_dataset import make_dataset
 import torch.nn as nn
@@ -15,39 +15,49 @@ import torch.optim as optim
 from rouge import Rouge
 
 dataset_path = "../dataset"
-train_dataset_path = os.path.join(dataset_path, "Training")
-valid_dataset_path = os.path.join(dataset_path, "Validation")
+#data_type_path = os.path.join(dataset_path, "book_sum")    #폴더 안에 하나의 문서당 하나의 json파일 있는 형태
+data_type_path = os.path.join(dataset_path, "doc_sum")      #하나의 hson파일 안에 모든 문서 데이터들 있는 형태
+train_dataset_path = os.path.join(data_type_path, "Training")
+valid_dataset_path = os.path.join(data_type_path, "Validation")
 
 def training(args, model_name, device):
+    if data_type_path==os.path.join(dataset_path, "book_sum"):
+        train_data1 = load_dataset(os.path.join(train_dataset_path, "training_dataset1"))
+        train_data2 = load_dataset(os.path.join(train_dataset_path, "training_dataset2"))
+        train_data3 = load_dataset(os.path.join(train_dataset_path, "training_dataset3"))
+        train_data4 = load_dataset(os.path.join(train_dataset_path, "training_dataset4"))
+        train_data = pd.concat([train_data1, train_data2, train_data3, train_data4], ignore_index=True)
+    
+    if data_type_path==os.path.join(dataset_path, "doc_sum"):
+        train_data1 = pd_load_dataset(os.path.join(train_dataset_path, "edit_training_dataset.json"))
+        train_data2 = pd_load_dataset(os.path.join(train_dataset_path, "law_training_dataset.json"))
+        train_data3 = pd_load_dataset(os.path.join(train_dataset_path, "paper_training_dataset.json"))
+        train_data = pd.concat([train_data1, train_data2, train_data3], ignore_index=True)
 
-    train_data1 = load_dataset(os.path.join(train_dataset_path, "training_dataset1"))
-    train_data2 = load_dataset(os.path.join(train_dataset_path, "training_dataset2"))
-    train_data3 = load_dataset(os.path.join(train_dataset_path, "training_dataset3"))
-    train_data4 = load_dataset(os.path.join(train_dataset_path, "training_dataset4"))
-    train_data = pd.concat([train_data1, train_data2, train_data3, train_data4], ignore_index=True)
+        print(f"{train_data1['passage'].shape=}, {train_data1['summary'].shape=}")
+        print(f"{train_data2['passage'].shape=}, {train_data2['summary'].shape=}")
+        print(f"{train_data3['passage'].shape=}, {train_data3['summary'].shape=}")
+        print(f"{train_data['passage'].shape=}, {train_data['summary'].shape=}")
+        print()
 
-
-    print("!!!!!!!")
     model_config = AutoConfig.from_pretrained(model_name)
-    print("&&&&&&&&&&&&&&&&&&&&&&&&&")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = BartForConditionalGeneration.from_pretrained(model_name, config = model_config)
 
-    for i in trange(len(train_data['passage']), desc="passage 토큰 길이 측정 "):
-        cnt=0
-        if len(tokenizer.tokenize(train_data['passage'][i]))>1022:
-            cnt+=1
-
-    print(f'1024토큰이 넘는 문서의 수 : {cnt}\n')
-    print(train_data.columns)
-        
+    print(f'{train_data.columns=}')
     train_data = make_dataset(tokenizer, train_data['passage'], train_data['summary'])  #(input_ids, attention_mask, token_type_ids, overflow_to_sample_mapping)
+
+    # for i in trange(len(train_data['passage']), desc="passage 토큰 길이 측정 "):
+    #     cnt=0
+    #     if len(tokenizer.tokenize(train_data['passage'][i]))>1022:
+    #         cnt+=1
+
+    # print(f'1024토큰이 넘는 문서의 수 : {cnt}\n')
 
     train_sampler = RandomSampler(train_data)
     train_loader = DataLoader(train_data, sampler=train_sampler, batch_size = args.per_device_train_batch_size)
 
     loss_fn = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
-    args.learning_rate= 4e-05
     optimizer = AdamW(model.parameters(), lr = args.learning_rate, eps=args.adam_epsilon)
 
     model.to(device)
@@ -91,12 +101,33 @@ def training(args, model_name, device):
     return model
 
 def validation(model, model_name, device):
+    # if data_type_path==os.path.join(dataset_path, "book_sum"):
+    #     valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
+    #     valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
+    #     valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
+    #     valid_data4 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
+    #     valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
+
+    # if data_type_path==os.path.join(dataset_path, "doc_sum"):
+    #     valid_data1 = pd_load_dataset(os.path.join(valid_dataset_path, "edit_valid_dataset.json"))
+    #     valid_data2 = pd_load_dataset(os.path.join(valid_dataset_path, "law_valid_dataset.json"))
+    #     valid_data3 = pd_load_dataset(os.path.join(valid_dataset_path, "paper_valid_dataset.json"))
+    #     valid_data = pd.concat([valid_data1, valid_data2, valid_data3], ignore_index=True)
+
+    ''' valid data들 다 합치기 '''
+    valid_dataset_path = os.path.join(dataset_path, "book_sum/Validation")
     valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
     valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
     valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
     valid_data4 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
     valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
 
+    # valid_dataset_path = os.path.join(dataset_path, "doc_sum/Validation")
+    # valid_data1 = pd_load_dataset(os.path.join(valid_dataset_path, "edit_valid_dataset.json"))
+    # valid_data2 = pd_load_dataset(os.path.join(valid_dataset_path, "law_valid_dataset.json"))
+    # valid_data3 = pd_load_dataset(os.path.join(valid_dataset_path, "paper_valid_dataset.json"))
+    # valid_data = pd.concat([valid_data, valid_data1, valid_data2, valid_data3], ignore_index=True)
+    
     rouge = Rouge()
     model.to(device)
     context = valid_data['passage']

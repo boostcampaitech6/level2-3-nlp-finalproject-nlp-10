@@ -22,3 +22,23 @@ def load_dataset(path):
         total_df = pd.concat([total_df, data], ignore_index=True)
 
     return total_df
+
+
+def pd_load_dataset(path):
+    df = pd.read_json(path)['documents']
+    total = {'passage' : [], 'summary' : []}
+
+    for d in tqdm(df, desc=f"make_df "):
+        for s in d['abstractive']:
+            total['summary'].append(s)
+
+        total_s=''
+        for texts in d['text']:
+            for text in texts:
+                total_s+=text['sentence']
+        total['passage'].append(total_s)
+    
+    total_df = pd.DataFrame(total)
+
+    return total_df
+            
