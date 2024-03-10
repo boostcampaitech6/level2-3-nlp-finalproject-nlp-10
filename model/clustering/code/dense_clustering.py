@@ -6,8 +6,6 @@ import time
 import argparse
 
 dataset_path = '../dataset'
-dataset = pd.read_csv(os.path.join(dataset_path, "add_embedding_Sum_FIN_NEWS_SUMMARY.csv"))
-embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), dataset['embedding'].tolist()))
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("--make", default='False', type=str, help='make topic? False = read')
@@ -15,6 +13,9 @@ args = parser.parse_args()
 
 if args.make == 'True':
     print("make_Topic")
+    dataset = pd.read_csv(os.path.join(dataset_path, "add_embedding_Sum_FIN_NEWS_SUMMARY.csv"))
+    embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), dataset['embedding'].tolist()))
+    
     # HDBSCAN 실행
     def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=3, min_samples=3, method='eom'):
         cluster = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size,
