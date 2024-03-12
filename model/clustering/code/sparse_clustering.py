@@ -7,10 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/13FviFcV79EEi27QRtoOxYXLRwX-_NXMa
 """
 
-!pip install transformers
-!pip install rank_bm25
-!pip install konlpy
-
 import sklearn
 import torch
 from sklearn.feature_extraction.text import TfidfVectorizer

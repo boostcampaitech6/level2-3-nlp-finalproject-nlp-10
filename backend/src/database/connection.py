@@ -10,7 +10,7 @@ load_dotenv()
 
 # 서버 연결 정보
 # server_user = os.getenv('SERVER_USER')
-# server_host = os.getenv('SERVER_HOST')
+server_host = os.getenv('SERVER_HOST')
 # server_port = int(os.getenv('SERVER_PORT'))
 # server_private_key_path = os.getenv('SERVER_PRIVATE_KEY_PATH')
 
