@@ -262,10 +262,10 @@ class Engine:
         
         topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC WHERE startdate BETWEEN '{self.start_time}' AND '{self.end_time}';", 
                                                     description='SELECT TOPIC TABLE')
-        logger.info(f"NEWS_TOPIC SELECT Done")
+        logger.info(f"{table_name} SELECT Done")
 
         news_topic_info = self.preprocess_news_topic(topic_data)
-        logger.info(f"NEWS_TOPIC PREPROCESS Done")
+        logger.info(f"{table_name} PREPROCESS Done")
         
         # TOPIC_NEWS 테이블 입력
         self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} (news_id, topic_id) VALUES (%(news_id)s, %(topic_id)s)",
@@ -274,9 +274,62 @@ class Engine:
         
         logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
         
-    def fill_topic_summary():
-        pass
+        
+    def fill_topic_summary(self):
+        table_name = 'TOPIC_SUMMARY'
+        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
+        merge_data = self.select_data_from_db(query = f"""
+                                                            SELECT T.topic_id,
+                                                                T.startdate,
+                                                                T.max_news_id,
+                                                                {self.db_config['database']}.NEWS.title,
+                                                                {self.db_config['database']}.SUMMARY.summary_text
+                                                            FROM (
+                                                                SELECT {self.db_config['database']}.NEWS_TOPIC.topic_id, 
+                                                                       {self.db_config['database']}.TOPIC.startdate, 
+                                                                       MAX({self.db_config['database']}.NEWS_TOPIC.news_id) AS max_news_id
+                                                                FROM {self.db_config['database']}.NEWS_TOPIC
+                                                                JOIN {self.db_config['database']}.TOPIC ON {self.db_config['database']}.NEWS_TOPIC.topic_id = {self.db_config['database']}.TOPIC.topic_id
+                                                                WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.start_time}' AND '{self.end_time}'
+                                                                GROUP BY {self.db_config['database']}.NEWS_TOPIC.topic_id
+                                                            ) AS T
+                                                            JOIN {self.db_config['database']}.NEWS ON T.max_news_id = {self.db_config['database']}.NEWS.news_id
+                                                            JOIN {self.db_config['database']}.SUMMARY ON T.max_news_id = {self.db_config['database']}.SUMMARY.news_id;
+                                                        """, 
+                                                description='SELECT NEWS, SUMMARY, TOPIC, NEWS_TOPIC MERGE TABLE')
+        logger.info(f"{table_name} SELECT DONE")
+        
+        topic_summary_info = self.preprocess_topic_summary(merge_data)
+        logger.info(f"{table_name} PREPROCESS DONE")
+        
+        # TOPIC_SUMMARY 테이블 입력
+        self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} (topic_id, topic_title_summary, topic_summary) \
+                                                VALUES (%(topic_id)s, %(topic_title_summary)s, %(topic_summary)s)",
+                               data=topic_summary_info,
+                               description=f'INSERT {table_name} TABLES')
     
+        logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
+        
+    
+    def fill_topic_image(self):
+        table_name = 'TOPIC_IMAGE'
+        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
+        
+        topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC WHERE startdate BETWEEN '{self.start_time}' AND '{self.end_time}';", 
+                                                    description='SELECT TOPIC TABLE')
+        logger.info(f"{table_name} SELECT DONE")
+        
+        topic_image_info = self.preprocess_topic_image(topic_data)
+        logger.info(f"{table_name} PREPROCESS DONE")
+        
+        # TOPIC_IMAGE 테이블에 입력
+        self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} (topic_id, image_url) VALUES (%(topic_id)s, %(image_url)s)",
+                               data=topic_image_info,
+                               description=f'INSERT {table_name} TABLES')
+        logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
+        
         
     def preprocess_news(self):
         df_main = pd.read_csv('./data/mainnews_all.csv')
@@ -443,7 +496,23 @@ class Engine:
             topic_id, news_id_lst = info['topic_id'], info['news_id_list'].split(',')
             news_topic_lst.extend([{'news_id' : news_id, 'topic_id' : topic_id} for news_id in news_id_lst])
         return news_topic_lst
-        
+    
+    
+    # [TODO] topic_title, topci_summary는 추후 수정 가능
+    def preprocess_topic_summary(self, merge_data):
+        topic_summary_info = [{'topic_id' : ts_data['topic_id'], 
+                                'topic_title_summary' : ts_data['title'],
+                                'topic_summary' : ts_data['summary_text']} for ts_data in merge_data]
+        return topic_summary_info
+
+    
+    
+    # [TODO] topic url은 추후 crawling을 통해서 수집
+    def preprocess_topic_image(self, topic_data):
+        image_url = 'https://imgnews.pstatic.net/image/016/2024/03/05/20240305050255_0_20240305103801168.jpg?type=w647'
+        topic_image_info = [{'topic_id' :data['topic_id'], 'image_url' : image_url} for data in topic_data] 
+        return topic_image_info
+
 
     def get_embedding_vector(self, summary_data, model_name = 'leewaay/kpf-bert-base-klueNLI-klueSTS-MSL512'):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
