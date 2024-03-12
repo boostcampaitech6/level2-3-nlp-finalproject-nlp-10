@@ -7,8 +7,6 @@ import random
 from tqdm import tqdm, trange
 import json
 from data_load import load_dataset
-from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
-from make_dataset import make_dataset
 import torch.nn as nn
 import torch.optim as optim
 from training import training, validation
@@ -34,14 +32,14 @@ else:
 
 set_seed(seed)
 
-model_name = "EbanLee/kobart-summary-v2"
+model_name = "EbanLee/kobart-summary-v1"
 
 parser = argparse.ArgumentParser(description="")
 
 parser.add_argument("--do_train", default='False', type=str, help='train doing?')
 parser.add_argument("--do_eval", default='False', type=str, help='eval doing?')
-parser.add_argument("--use_local_model", default='False', type=str, help='eval doing?')
-parser.add_argument("--make_dataframe", default='False', type=str, help='make summary file')
+parser.add_argument("--use_local_model", default='False', type=str, help='load saved model')
+parser.add_argument("--make_df", default='False', type=str, help='make summary file')
 
 args = parser.parse_args()
 
@@ -68,7 +66,7 @@ if args.do_eval == 'True':
     #print(f'\n{model.state_dict()=}\n')
     validation(model, model_name, device)
 
-if args.make_dataframe == 'True':
+if args.make_df == 'True':
     print(f'make_dataset!')
     data_path = "../dataset/custom_data"
     tokenizer = AutoTokenizer.from_pretrained(model_name)

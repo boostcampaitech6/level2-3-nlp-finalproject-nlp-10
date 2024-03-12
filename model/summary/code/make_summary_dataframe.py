@@ -9,8 +9,8 @@ def make_summary_data(model, tokenizer, dataset_path, device):
     name_end = 'RY.csv'
     model.to(device)
     batch_size = 64
-    min_length = 30
-    max_length = 256
+    min_length = 40
+    max_length = 230
     model.eval()
 
     for file in file_list:
@@ -31,16 +31,16 @@ def make_summary_data(model, tokenizer, dataset_path, device):
             text = total_data['contents'].iloc[idx]
             text_len = len(tokenizer.tokenize(text))
             
-            if text_len<min_length:
+            if text_len<min_length+20:
                 text = total_data['title'].iloc[idx] + '.' + text
 
             tokens = tokenizer.encode(text, padding="max_length", truncation=True, max_length=1024)
             input_ids.append(tokens)
 
-            if len(tokenizer.tokenize(text))<min_length:
+            if len(tokenizer.tokenize(text))<min_length+20:
                 no_text_ids.append(idx)
 
-        print(f'\n{no_text_ids=}\n')
+        print(f'\nShort Text: {len(no_text_ids)}\n')
         input_dataset = TensorDataset(torch.tensor(input_ids))
         data_loader = DataLoader(input_dataset, batch_size=batch_size, shuffle=False)
 
@@ -51,17 +51,18 @@ def make_summary_data(model, tokenizer, dataset_path, device):
                                         input_ids=batch[0].to(device),
                                         bos_token_id=model.config.bos_token_id,
                                         eos_token_id=model.config.eos_token_id,
-                                        length_penalty=2.0,
+                                        length_penalty=2.5,
                                         max_length=max_length,
                                         min_length=min_length,
                                         num_beams=6,
-                                        repetition_penalty=2.0,
+                                        repetition_penalty=1.5,
                                         ).to('cpu')
 
 
             for ids in summary_text_ids:
                 output = tokenizer.decode(ids, skip_special_tokens=True)
-                s_list.append(output)  
+                output = output.replace("\n", " ")
+                s_list.append(output)
         
         for idx in no_text_ids:
             s_list[idx] = total_data['title'].iloc[idx]
@@ -69,6 +70,6 @@ def make_summary_data(model, tokenizer, dataset_path, device):
         df_sum = pd.DataFrame({'summary' : s_list})
 
         total_data = pd.concat([total_data, df_sum], axis=1)
-        total_data.to_csv(os.path.join("../../embedding/dataset", f'Sum_{file}'), index=False)
+        total_data.to_csv(os.path.join("../../embedding/dataset", f'4Sum_{file}'), index=False)
         print('\nAdd summary data finish!\n')
             
