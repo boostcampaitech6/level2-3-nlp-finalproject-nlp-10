@@ -15,7 +15,7 @@ class News(Base):
     datetime = Column(DateTime, nullable=False, default=datetime.now)
     contents = Column(VARCHAR(3000), nullable=False)
     url = Column(VARCHAR(100), nullable=False)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # one to many
     news_company_list = relationship("News_company", back_populates="news")
@@ -32,7 +32,7 @@ class Summary(Base):
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
     summary_text = Column(VARCHAR(500), nullable=False)    
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
     news_id = Column(Integer, ForeignKey("news.id"))
@@ -47,7 +47,7 @@ class Sentiment(Base):
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
     sentiment_value = Column(Integer, nullable=False)      
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
     news_id = Column(Integer, ForeignKey("news.id"))
@@ -63,7 +63,7 @@ class Company(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(VARCHAR(20), nullable=False)
     company_code = Column(VARCHAR(20), nullable=False)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # one to many
     company_news_list = relationship("News_company", back_populates="company")
@@ -74,7 +74,7 @@ class News_company(Base):
     
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
     news_id = Column(Integer, ForeignKey("news.id"))
@@ -90,24 +90,26 @@ class Topic(Base):
     
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
-    nouns = Column(VARCHAR(200), nullable=False)
+    news_id_list = Column(VARCHAR(2000), nullable=False)
     company_id = Column(VARCHAR(20), nullable=False) 
+    topic_date = Column(VARCHAR(100), nullable=False)
     topic_code = Column(VARCHAR(20), nullable=False)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # sentiment = Column(Integer, nullable=False)
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # one to many
     topic_news_list = relationship("News_topic", back_populates="topic") 
     
     # one to one
-    topic_summary = relationship("Topic_summary", back_populates="Topic", uselist=False)
-    topic_image = relationship("Topic_image", back_populates="Topic", uselist=False)
+    topic_summary = relationship("Topic_summary", back_populates="topic", uselist=False)
+    topic_image = relationship("Topic_image", back_populates="topic", uselist=False)
     
 class News_topic(Base):
     __tablename__ = "news_topic"
     
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
     news_id = Column(Integer, ForeignKey("news.id"))
@@ -123,15 +125,15 @@ class Topic_summary(Base):
     
     # columns
     id = Column(Integer, primary_key=True, autoincrement=True)
-    topic_title_sumary = Column(VARCHAR(200), nullable=False)
-    topic_sumary = Column(VARCHAR(1000), nullable=False)
-    del_yn = Column(VARCHAR(1), nullable=False, default='N')
+    topic_title_summary = Column(VARCHAR(200), nullable=False)
+    topic_summary = Column(VARCHAR(1000), nullable=False)
+    # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
     topic_id = Column(Integer, ForeignKey("topic.id"))
     
     # one to one
-    topic = relationship("Topic", back_populates="Topic_summary")
+    topic = relationship("Topic", back_populates="topic_summary")
     
     
 class Topic_image(Base):
@@ -145,7 +147,7 @@ class Topic_image(Base):
     topic_id = Column(Integer, ForeignKey("topic.id"))
     
     # one to one
-    topic = relationship("Topic", back_populates="Topic_image")
+    topic = relationship("Topic", back_populates="topic_image")
     
     
     

@@ -22,10 +22,10 @@ db_port = int(os.getenv('DB_PORT'))
 db_name = os.getenv('DB_NAME')
 
 # local
-# DB_URL = f'mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+DB_URL = f'mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
 
 # server
-DB_URL = f"mysql+pymysql://{db_user}:{db_password}@{server_host}/{db_name}"
+# DB_URL = f"mysql+pymysql://{db_user}:{db_password}@{server_host}/{db_name}"
 
 engine = create_engine(DB_URL, echo=True, pool_size=5, max_overflow=10)
 session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
