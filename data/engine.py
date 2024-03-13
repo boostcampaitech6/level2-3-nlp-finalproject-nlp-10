@@ -245,7 +245,7 @@ class Engine:
         # EMBEDDING 생성
         topic_info = self.preprocess_topic(merge_data)
         logger.info(f"MAKE EMBEDDING DONE")
-        
+         
         # TOPIC 테이블에 입력
         self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} (topic_code, company_id, news_id_list, topic_date, startdate) \
                                                     VALUES (%(topic_code)s, %(company_id)s, %(news_id_list)s, %(topic_date)s, %(start_date)s)",
@@ -445,19 +445,26 @@ class Engine:
 
         torch.cuda.empty_cache()
         return sentiment_info
-    
-    
+     
 
     def preprocess_topic(self, merge_data):
         df_merge = self.get_embedding_vector(merge_data, model_name = 'leewaay/kpf-bert-base-klueNLI-klueSTS-MSL512')
+        
         topic_info = []
-
-        for stock in df_merge['name'].unique():
-            df_stock = df_merge[df_merge['name'] == stock].copy()
+        for stock in ['전체'] + df_merge['name'].unique().tolist():
             
-            logger.info(f"Stock : {stock} Clustering Start, Count : {len(df_stock)} ")
-            stock_name, company_id, topic_date = df_stock['name'].unique()[0], df_stock['company_id'].unique()[0], datetime.strptime(self.today, '%Y-%m-%d')
-            
+            # 전체 종목 클러스터링
+            if stock == '전체':
+                df_stock = df_merge.copy()
+                # news_id 마다 여러 company_id에 매핑되어있다. news_id를 기준으로 중복 제거처리.
+                df_stock = df_stock.drop_duplicates(subset=['news_id']).reset_index(drop=True)
+                stock_name, company_id, topic_date = '전체', '0', datetime.strptime(self.today, '%Y-%m-%d')
+                
+            else:
+                df_stock = df_merge[df_merge['name'] == stock].copy()
+                stock_name, company_id, topic_date = df_stock['name'].unique()[0], df_stock['company_id'].unique()[0], datetime.strptime(self.today, '%Y-%m-%d')
+                
+            # logger.info(f"Stock : {stock} Clustering Start, Count : {len(df_stock)} ")
             if len(df_stock) == 1:
                 topic_code = f"{stock_name}_{self.topic_n}_0"
                 news_id_list = str(df_stock['news_id'].unique()[0])
@@ -487,6 +494,7 @@ class Engine:
                                             'topic_date' : topic_date,
                                             'start_date' : self.start_time,
                                             })
+                    
         return topic_info
     
     def preprocess_news_topic(self, topic_data):
