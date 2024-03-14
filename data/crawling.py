@@ -68,9 +68,22 @@ class NewsCrawler:
                 if (stock_query != stock_check) and (stock_query in stock_check):
                     dupli_stock_info[stock_query].append(stock_check)
         
-        dupli_stock_info['SK'].extend(['SK해운', 'SK에코플랜트'])
-        dupli_stock_info['KT'].extend(['KTC', 'KT클라우드'])
+        dupli_stock_info['SK'].extend(['SK해운', 'SK이노베이션','SK에너지','SK지오센트릭','SK루브리컨츠','SK인천석유화학',
+                                       'SK트레이딩인터내셔널','SK아이이테크놀로지','SK온','SK어스온','SK디스커버리','SK멀티유틸리티',
+                                       'SK케미칼','SK가스','SK엔텀','SK오션플랜트','SK이터닉스','SK플라즈마','SK어드밴스드','SK바이오팜',
+                                       'SK바이오텍','SKC','SK텔레콤','SK스퀘어','SK실트론','SK테크엑스','SK주식회사','SK플래닛',
+                                       'SK엠앤서비스','SK하이닉스','SK쉴더스','SK유비쿼터스','SK매직','SK머티리얼즈','SK머티리얼즈홀딩스',
+                                       'SK브로드밴드','SK스토아','SK텔레시스','SK텔링크','SK커뮤니케이션즈','SK네트웍스','SK일렉링크','SK렌터카',
+                                       'SK네트웍스서비스','SK에코플랜트','SK에코엔지니어링','SK임업','SK슈가글라이더즈','SK텔레콤'])
+        
+        dupli_stock_info['LG'].extend(['LG전자','LG디스플레이','LG이노텍','LG히타치워터솔루션','LG마그나','LG화학','LG생활건강','LG유니참',
+                                       'LG유플러스','LG헬로비전','LG CNS','LG에너지솔루션','LG 경영개발원','LG인화원','LG경영연구원','LG공익재단',
+                                       'LG연암문화재단','LG복지재단','LG연암학원','LG상록재단','LG상남언론재단','LG스포츠','LG 트윈스','LG 세이커스'])
+        
+        dupli_stock_info['KT'].extend(['KTC', 'KT텔레캅','KT서비스','KT에스테이트','KT지디에이치','KT엠모바일','KT커머스','KT엠앤에스',
+                                        'KT클라우드','KT엔지니어링','KT아이에스','KT씨에스','KT링커스','KT디에스','KT넥스알','KT엠오에스','KT인베스트먼트'])
         dupli_stock_info['하이브'].extend(['하이브리드'])
+        dupli_stock_info['에코프로'].extend(['에코프로비엠'])
 
 
         return dupli_stock_info
@@ -235,6 +248,8 @@ class NewsCrawler:
 
     @tenacity.retry(wait=tenacity.wait_fixed(1), stop=tenacity.stop_after_attempt(5))
     async def crawling_contents_from_url(self, url):
+        BASE_IMG_URL = 'https://ssl.pstatic.net/static/dm/boostcamp/img/home/img-aitech@2x.png'
+        
         """url에 접근해서 제목, 내용, 일자를 크롤링하는 함수"""
         try:
             response = await self.client.get(url=url)
@@ -256,11 +271,18 @@ class NewsCrawler:
                 contents = news_html.select("#articeBody")
                 
             contents = contents[0].get_text()
-        
+            
+            # 이미지 있는지 확인 후 크롤링
+            try:
+                img_tag = news_html.select_one('span.end_photo_org > div > div > img')
+                img_url = img_tag['data-src'] if img_tag else BASE_IMG_URL
+            except:
+                img_url = BASE_IMG_URL
+                
         except Exception as e:
             raise ValueError("CRAwLING NOT WORK")
         
-        return title, date, contents
+        return title, date, contents, img_url
 
 
 
@@ -360,7 +382,7 @@ class NewsCrawler:
 
         for url in tqdm(df_url['url']):
             try:
-                title, date, contents = await self.crawling_contents_from_url(url)
+                title, date, contents, img_url = await self.crawling_contents_from_url(url)
                 # 여기에 전처리 함수 추가하기.
                 contents = self.denoiser.remove_space(contents)
                 date = f"{date.split(' ')[0][0:4]}-{date.split(' ')[0][5:7]}-{date.split(' ')[0][8:10]} {int(date.split(' ')[2][:-3]) + (0 if date.split(' ')[1] == '오전' else 12)}:{date.split(' ')[2][-2:]}"
@@ -372,7 +394,7 @@ class NewsCrawler:
                 
                 # 관련 종목이 있는 경우에만 저장
                 if relate_stock:
-                    crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date})
+                    crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date, 'img_url':img_url})
             except:
                 continue
 

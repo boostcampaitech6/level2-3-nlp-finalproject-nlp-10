@@ -21,7 +21,7 @@ load_dotenv()
 tqdm.pandas()
 
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, BartForConditionalGeneration
 from sentence_transformers import SentenceTransformer
 import hdbscan
 
@@ -180,7 +180,7 @@ class Engine:
         # NEWS 요약 데이터 생성
         summary_info = self.preprocess_summary(news_data=news_data, 
                                                model_path= './model/summary/summary_model.pt',
-                                               pretrained_model_name_or_path="ainize/kobart-news")
+                                               pretrained_model_name_or_path="EbanLee/kobart-summary-v2")
         logger.info(f"NEWS {table_name} Done")
         
         # SUMMARY TABLE에 데이터 입력
@@ -384,14 +384,13 @@ class Engine:
         return news_company_info
     
     
-    def preprocess_summary(self, news_data, model_path='./model/summary/summary_model.pt', pretrained_model_name_or_path="ainize/kobart-news"):
+    def preprocess_summary(self, news_data, model_path='./model/summary/summary_model.pt', pretrained_model_name_or_path="EbanLee/kobart-summary-v2"):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # tokenizer 및 모델 로드
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
-        model = torch.load(model_path, map_location=torch.device(device))
+        model = BartForConditionalGeneration.from_pretrained(pretrained_model_name_or_path)
         model.to(device)
         model.eval()
-        
         summary_info = [] 
         with torch.no_grad():
             for i in tqdm(range((len(news_data) // 30) + 1), desc='SUMMARY WORKING'):
@@ -406,9 +405,13 @@ class Engine:
                                                     truncation=True, 
                                                     max_length=1026).to(device)
 
-                # [TODO] 수정이 필요함 Batch generate
-                outputs = model.generate(inputs['input_ids'],
-                                         **generation_config).to("cpu")
+                outputs = model.generate(inputs['input_ids'], 
+                                            bos_token_id=tokenizer.bos_token_id,
+                                            eos_token_id=tokenizer.eos_token_id,
+                                            length_penalty=2.0,
+                                            max_length=300,
+                                            min_length=50,
+                                            num_beams=6,).to("cpu")
                 
                 decoded_output = tokenizer.batch_decode(outputs, skip_special_tokens=True)
                 
@@ -580,13 +583,27 @@ class Engine:
                     relate_news.append(stock)
             else:
                 relate_news.append(stock)
-        
         return relate_news
-    
-fix_seed()
 
-db_user = os.getenv('DB_USER')
-db_password = os.getenv('DB_PASSWORD')
-db_host = os.getenv('DB_HOST')
-db_database = os.getenv('DB_DATABASE')
-db_port = os.getenv('DB_PORT')
+
+
+if __name__ == "__main__":    
+    fix_seed()
+    db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
+    engine = Engine(db_user=db_user, 
+                        db_password=db_password, 
+                        db_host=db_host, 
+                        topic_n=0, 
+                        db_database= db_database, 
+                        db_port=db_port, 
+                        period=24, 
+                        day_diff=1)
+    
+    engine.fill_news()
+    # engine.fill_summary()
+    # engine.fill_sentiment()
+    # engine.fill_topic()
+    # engine.fill_news_topic()
+    # engine.fill_topic_summary()
+    # engine.fill_topic_image()
+    
