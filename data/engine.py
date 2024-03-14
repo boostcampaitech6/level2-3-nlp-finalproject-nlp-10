@@ -137,8 +137,8 @@ class Engine:
         news_info = self.preprocess_news()
         logger.info(f"NEWS Preprocessing Done")
         
-        self.insert_data_to_db(query = f"INSERT INTO {self.db_config['database']}.{table_name} (date, url, title, contents, relate_stock) \
-                                                            VALUES (%(date)s, %(url)s, %(title)s, %(contents)s, %(relate_stock)s)",
+        self.insert_data_to_db(query = f"INSERT INTO {self.db_config['database']}.{table_name} (date, url, title, contents, relate_stock, img_url) \
+                                                            VALUES (%(date)s, %(url)s, %(title)s, %(contents)s, %(relate_stock)s, %(img_url))",
                                data = news_info, 
                                description = f'INSERT {table_name} TABLE')
         logger.info(f"INSERT {table_name} TABLE DONE : {start_time} ~ {end_time}")
@@ -339,7 +339,7 @@ class Engine:
 
         # 데이터 전처리
         df_news = pd.concat([df_main, df_company, df_disclosure, df_economy])
-        df_news = df_news[['datetime', 'url', 'real_title', 'contents', 'relate_stock']].rename({'real_title' : 'title', 'datetime' : 'date'}, axis=1)
+        df_news = df_news[['datetime', 'url', 'real_title', 'contents', 'relate_stock','img_url']].rename({'real_title' : 'title', 'datetime' : 'date'}, axis=1)
 
         # 수집하는 기간에 해당하는 뉴스 확인, datetime 형식 변경 : 오후 12시 : 24시 --> 12시
         df_news['date'] = pd.to_datetime(df_news['date'].apply(lambda x : x.replace("24:", "12:")))
@@ -587,6 +587,7 @@ class Engine:
 
 
 
+
 if __name__ == "__main__":    
     fix_seed()
     db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
@@ -599,7 +600,7 @@ if __name__ == "__main__":
                         period=24, 
                         day_diff=1)
     
-    engine.fill_news()
+    asyncio.run(engine.fill_news())
     # engine.fill_summary()
     # engine.fill_sentiment()
     # engine.fill_topic()
