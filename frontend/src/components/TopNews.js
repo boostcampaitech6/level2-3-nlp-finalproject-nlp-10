@@ -1,14 +1,10 @@
-import React from 'react'
+import { React, useEffect, useState } from "react";
 import "../css/font.css";
 import "../css/layout.css";
-import {
-  Box,
-  Typography,
-  List,
-  ListItem,
-} from "@mui/material";
+import { Box, Typography, List, ListItem } from "@mui/material";
 import { IoLogoDesignernews } from "react-icons/io5";
 import { IconContext } from "react-icons";
+import axios from "axios";
 
 const news = [
   "5년 타면 유류비 800만원 절약…아이오닉6, 美서 일냈다",
@@ -24,14 +20,14 @@ const news_recent = [
 ];
 
 export default function TopNews(props) {
-  let date = '최신'
-  let news_num = '3'
-  if (props.date == 'today') {
-    date = '오늘의'
-  } else if (props.date == 'yesterday') {
-    date = '어제의'
+  let date = "최신";
+  let news_num = "3";
+  if (props.date == "today") {
+    date = "오늘의";
+  } else if (props.date == "yesterday") {
+    date = "어제의";
   } else {
-    news_num = '5'
+    news_num = "5";
   }
   return (
     <>
@@ -47,18 +43,26 @@ export default function TopNews(props) {
             pl: 1.3,
           }}
         >
-          {date} 뉴스 Top{news_num}
+          뉴스 Top5
         </Typography>
       </Box>
 
       {/* 뉴스 기사 제목 */}
-      <List sx={{ p: 1, pl: 2.5, listStyleType: 'square' }}>
-        {news.map((it, idx) => (
-          <ListItem key={idx} sx={{ display: 'list-item', p: 0.5, fontSize: "1rem", fontFamily: "omyu_pretty" }}>
+      <List sx={{ p: 1, pl: 2.5, listStyleType: "square" }}>
+        {props.title.slice(0, 5).map((it, idx) => (
+          <ListItem
+            key={idx}
+            sx={{
+              display: "list-item",
+              p: 0.5,
+              fontSize: "1.5rem",
+              fontFamily: "omyu_pretty",
+            }}
+          >
             {it}
           </ListItem>
         ))}
       </List>
     </>
-  )
+  );
 }

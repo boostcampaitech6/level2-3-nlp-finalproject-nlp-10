@@ -1,17 +1,14 @@
-import React from 'react'
+import React from "react";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import "../css/font.css";
 import "../css/layout.css";
-import {
-  Box,
-} from "@mui/material";
-import NavBar from "../components/NavBar"
-import CompanyInfo from './CompanyInfo';
-import Companynews from './Companynews';
-import Allnews from './Allnews';
-import FilterTab from '../components/FilterTab';
-
+import { Box } from "@mui/material";
+import NavBar from "../components/NavBar";
+import CompanyInfo from "./CompanyInfo";
+import Companynews from "./Companynews";
+import Allnews from "./Allnews";
+import FilterTab from "../components/FilterTab";
 
 const styles = (theme) => ({
   root: {
@@ -36,18 +33,55 @@ export default function Main() {
   const [value, setValue] = useState(tabNum);
 
   const handleChange = (e, newValue) => {
-    setValue(newValue)
-  }
+    setValue(newValue);
+  };
+
+  const [startDate, setStartDate] = useState("2023-11-01");
+  const [endDate, setEndDate] = useState("2023-11-02");
+  const [company, setCompany] = useState(1);
+  const [confirm, setConfirm] = useState(true);
+
+  const handleChangeStartDate = (value) => {
+    setStartDate(value);
+    console.log("start value", value);
+  };
+
+  const handleChangeEndDate = (value) => {
+    setEndDate(value);
+    console.log("end value", value);
+  };
+
+  const handleChangeCompany = (value) => {
+    setCompany(value);
+    console.log("company value", value);
+  };
+
+  const handleChangeConfirm = (value) => {
+    setConfirm(value);
+    console.log("confirm value", value);
+  };
 
   return (
     <>
       <div className={styles.root} name="main">
         <NavBar selectedTab={value} onClickTab={handleChange} />
-        <FilterTab />
-        {value == "0" && <Allnews />}
+        <FilterTab
+          changeStartDate={handleChangeStartDate}
+          changeEndDate={handleChangeEndDate}
+          changeCompany={handleChangeCompany}
+          changeConfirm={handleChangeConfirm}
+        />
+        {value == "0" && (
+          <Allnews
+            startDate={startDate}
+            endDate={endDate}
+            company={company}
+            confirm={confirm}
+          />
+        )}
         {value == "1" && <CompanyInfo />}
         {value == "2" && <Box></Box>}
       </div>
     </>
-  )
+  );
 }

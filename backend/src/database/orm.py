@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey 
+from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey, Date 
 from datetime import datetime 
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,12 +7,12 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 class News(Base):
-    __tablename__ = "news"
+    __tablename__ = "NEWS"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    news_id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(VARCHAR(100), nullable=False)
-    datetime = Column(DateTime, nullable=False, default=datetime.now)
+    date = Column(DateTime, nullable=False)
     contents = Column(VARCHAR(3000), nullable=False)
     url = Column(VARCHAR(100), nullable=False)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
@@ -27,40 +27,40 @@ class News(Base):
 
 
 class Summary(Base):
-    __tablename__ = "summary"
+    __tablename__ = "SUMMARY"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    summary_id = Column(Integer, primary_key=True, autoincrement=True)
     summary_text = Column(VARCHAR(500), nullable=False)    
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    news_id = Column(Integer, ForeignKey("news.id"))
+    news_id = Column(Integer, ForeignKey("NEWS.news_id"))
     
     # one to one
     news = relationship("News", back_populates="summary")
     
     
 class Sentiment(Base):
-    __tablename__ = "sentiment"
+    __tablename__ = "SENTIMENT"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    sentiment_id = Column(Integer, primary_key=True, autoincrement=True)
     sentiment_value = Column(Integer, nullable=False)      
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    news_id = Column(Integer, ForeignKey("news.id"))
+    news_id = Column(Integer, ForeignKey("NEWS.news_id"))
     
     # one to one
     news = relationship("News", back_populates="sentiment")
     
     
 class Company(Base):
-    __tablename__ = "company"
+    __tablename__ = "COMPANY"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(VARCHAR(20), nullable=False)
     company_code = Column(VARCHAR(20), nullable=False)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
@@ -70,15 +70,16 @@ class Company(Base):
     
     
 class News_company(Base):
-    __tablename__ = "news_company"
+    __tablename__ = "NEWS_COMPANY"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    news_company_id = Column(Integer, primary_key=True, autoincrement=True)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    news_id = Column(Integer, ForeignKey("news.id"))
-    company_id = Column(Integer, ForeignKey("company.id"))
+    news_id = Column(Integer, ForeignKey("NEWS.news_id"))
+    company_id = Column(Integer, ForeignKey("COMPANY.company_id"))
+    
     
     # many to one
     news = relationship("News", back_populates="news_company_list")
@@ -86,13 +87,13 @@ class News_company(Base):
     
     
 class Topic(Base):
-    __tablename__ = "topic"
+    __tablename__ = "TOPIC_AT"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    topic_id = Column(Integer, primary_key=True, autoincrement=True)
     news_id_list = Column(VARCHAR(2000), nullable=False)
     company_id = Column(VARCHAR(20), nullable=False) 
-    topic_date = Column(VARCHAR(100), nullable=False)
+    topic_date = Column(Date, nullable=False)
     topic_code = Column(VARCHAR(20), nullable=False)
     # sentiment = Column(Integer, nullable=False)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
@@ -105,15 +106,15 @@ class Topic(Base):
     topic_image = relationship("Topic_image", back_populates="topic", uselist=False)
     
 class News_topic(Base):
-    __tablename__ = "news_topic"
+    __tablename__ = "NEWS_TOPIC_AT"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    news_topic_id = Column(Integer, primary_key=True, autoincrement=True)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    news_id = Column(Integer, ForeignKey("news.id"))
-    topic_id = Column(Integer, ForeignKey("topic.id"))
+    news_id = Column(Integer, ForeignKey("NEWS.news_id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
     
     # many to one
     news = relationship("News", back_populates="news_topic_list")
@@ -121,30 +122,30 @@ class News_topic(Base):
     
 
 class Topic_summary(Base):
-    __tablename__ = "topic_summary"
+    __tablename__ = "TOPIC_SUMMARY"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    topic_summary_id = Column(Integer, primary_key=True, autoincrement=True)
     topic_title_summary = Column(VARCHAR(200), nullable=False)
     topic_summary = Column(VARCHAR(1000), nullable=False)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    topic_id = Column(Integer, ForeignKey("topic.id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
     
     # one to one
     topic = relationship("Topic", back_populates="topic_summary")
     
     
 class Topic_image(Base):
-    __tablename__ = "topic_image"
+    __tablename__ = "TOPIC_IMAGE"
     
     # columns
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    topic_image_id = Column(Integer, primary_key=True, autoincrement=True)
     image_url = Column(VARCHAR(100), nullable=False)
     
     # foreign key
-    topic_id = Column(Integer, ForeignKey("topic.id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
     
     # one to one
     topic = relationship("Topic", back_populates="topic_image")
