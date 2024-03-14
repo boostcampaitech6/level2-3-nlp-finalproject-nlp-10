@@ -397,11 +397,11 @@ class NewsCrawler:
                     crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date, 'img_url':img_url})
             except:
                 continue
-
-        df_contents = pd.DataFrame(crawling_info)
-        df_merge = pd.merge(left=df_url, right=df_contents, on='url').dropna()
-        df_merge = df_merge.drop_duplicates(subset=['url'])
-        df_merge.to_csv(merge_data_path, index=False)
+        if crawling_info:
+            df_contents = pd.DataFrame(crawling_info)
+            df_merge = pd.merge(left=df_url, right=df_contents, on='url').dropna()
+            df_merge = df_merge.drop_duplicates(subset=['url'])
+            df_merge.to_csv(merge_data_path, index=False)
 
 
 

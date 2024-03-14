@@ -138,7 +138,7 @@ class Engine:
         logger.info(f"NEWS Preprocessing Done")
         
         self.insert_data_to_db(query = f"INSERT INTO {self.db_config['database']}.{table_name} (date, url, title, contents, relate_stock, img_url) \
-                                                            VALUES (%(date)s, %(url)s, %(title)s, %(contents)s, %(relate_stock)s, %(img_url))",
+                                                            VALUES (%(date)s, %(url)s, %(title)s, %(contents)s, %(relate_stock)s, %(img_url)s)",
                                data = news_info, 
                                description = f'INSERT {table_name} TABLE')
         logger.info(f"INSERT {table_name} TABLE DONE : {start_time} ~ {end_time}")
@@ -317,8 +317,19 @@ class Engine:
         start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         
-        topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC WHERE startdate BETWEEN '{self.start_time}' AND '{self.end_time}';", 
-                                                    description='SELECT TOPIC TABLE')
+        topic_data = self.select_data_from_db(query = f"""
+                                                    SELECT T.topic_id,
+                                                        {self.db_config['database']}.NEWS.img_url
+                                                    FROM (
+                                                        SELECT {self.db_config['database']}.NEWS_TOPIC.topic_id, MAX({self.db_config['database']}.NEWS_TOPIC.news_id) AS max_news_id
+                                                        FROM {self.db_config['database']}.NEWS_TOPIC
+                                                        JOIN {self.db_config['database']}.TOPIC ON {self.db_config['database']}.NEWS_TOPIC.topic_id = {self.db_config['database']}.TOPIC.topic_id
+                                                        WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.start_time}' AND '{self.end_time}'
+                                                        GROUP BY {self.db_config['database']}.NEWS_TOPIC.topic_id
+                                                    ) AS T
+                                                    JOIN {self.db_config['database']}.NEWS ON T.max_news_id = {self.db_config['database']}.NEWS.news_id                                          
+                                              """, 
+                                                    description='SELECT NEWS, TOPIC, NEWS_TOPIC TABLE')
         logger.info(f"{table_name} SELECT DONE")
         
         topic_image_info = self.preprocess_topic_image(topic_data)
@@ -520,8 +531,7 @@ class Engine:
     
     # [TODO] topic url은 추후 crawling을 통해서 수집
     def preprocess_topic_image(self, topic_data):
-        image_url = 'https://imgnews.pstatic.net/image/016/2024/03/05/20240305050255_0_20240305103801168.jpg?type=w647'
-        topic_image_info = [{'topic_id' :data['topic_id'], 'image_url' : image_url} for data in topic_data] 
+        topic_image_info = [{'topic_id' : ti_data['topic_id'], 'image_url' : ti_data['img_url']} for ti_data in topic_data]
         return topic_image_info
 
 
@@ -579,7 +589,7 @@ class Engine:
 
         for stock in counter:
             if stock in ['SK', 'LG', 'KT'] :
-                if counter[stock] >= 5:
+                if counter[stock] >= 3:
                     relate_news.append(stock)
             else:
                 relate_news.append(stock)
@@ -598,13 +608,14 @@ if __name__ == "__main__":
                         db_database= db_database, 
                         db_port=db_port, 
                         period=24, 
-                        day_diff=1)
+                        day_diff=134)
     
-    asyncio.run(engine.fill_news())
-    # engine.fill_summary()
-    # engine.fill_sentiment()
-    # engine.fill_topic()
-    # engine.fill_news_topic()
-    # engine.fill_topic_summary()
-    # engine.fill_topic_image()
+    # -- asyncio.run(engine.fill_news())
+    # -- engine.fill_news_company()
+    engine.fill_summary()
+    engine.fill_sentiment()
+    engine.fill_topic()
+    engine.fill_news_topic()
+    engine.fill_topic_summary()
+    engine.fill_topic_image()
     
