@@ -19,7 +19,7 @@ def make_dataset(tokenizer, input_data, target_data):
                             truncation=True,
                             # stride = doc_stride,
                             # return_overflowing_tokens=True,
-                            #return_token_type_ids=False,
+                            # return_token_type_ids=False,
                             )
         
         i_input_ids.append(input_token['input_ids'])    #return_overflowing_tokens이 True면 차원이 하나 더 붙어서 나온다. 따라서 extend로 바꿔야함

@@ -1,6 +1,4 @@
 import re
-import sys
-sys.path.append('/data/ephemeral/home/level2-3-nlp-finalproject-nlp-10/hanja')
 import hanja
 
 def remove_space(text):
@@ -108,21 +106,27 @@ def remove_points(text):
 def pre_processing(txt):
     #txt = remove_to_callback(txt)
     #txt = remove_from_back_third_triangle(txt)
-    txt = remove_email(txt)
+    txt = remove_email(txt) #이메일
     #txt = remove_date(txt)
-    txt = remove_quote(txt)
-    txt = remove_url(txt)
+    txt = remove_quote(txt) #따옴표
+    #txt = remove_url(txt)   #URL
     #txt = remove_number_text(txt)
-    txt = remove_consonants_vowels(txt)
+    txt = remove_consonants_vowels(txt) #단일 자음 모음
     #txt = remove_between_round_brackets(txt)
-    txt = remove_between_curly_brackets(txt)
-    txt = remove_between_square_brackets(txt)
+    #txt = remove_between_curly_brackets(txt)    #{}안에 제거
+    #txt = remove_between_square_brackets(txt)   #[]안에 제거
     #txt = remove_between_angle_brackets(txt)
-    txt = remove_journalist(txt)
+    #txt = remove_journalist(txt)    
     #txt = remove_float(txt)
     #txt = remove_symbol(txt)
+    txt = txt.replace('[사설]', ' ')
+    txt = txt.replace('<사설>', ' ')
+    txt = txt.replace('(사설)', ' ')
+    txt = txt.replace('[속보]', ' ')
+    txt = txt.replace('<속보>', ' ')
+    txt = txt.replace('(속보)', ' ')
     txt = remove_points(txt)
     txt = remove_space(txt)
-    txt = hanja.translate(txt, 'combination-text-reversed') #'大韓民國은 民主共和國이다.' -> '대한민국(大韓民國)은 민주공화국(民主共和國)이다.'
+    txt = hanja.translate(txt, 'combination-text')
 
     return txt
