@@ -87,7 +87,6 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         >
           {/* 오늘 뉴스 */}
           <TopNews
-            date={"today"}
             cnt={cnt}
             topicId={topicId}
             topicSummary={topicSummary}
@@ -98,15 +97,12 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
 
           {/* 다이어그램 */}
           <KeywordChart
-            date={"today"}
             cnt={cnt}
             topicId={topicId}
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
           />
-          {/*어제 뉴스*/}
-          {/* <TopNews date={'yesterday'} /> */}
         </Grid>
 
         {/* 본문 우측 */}
