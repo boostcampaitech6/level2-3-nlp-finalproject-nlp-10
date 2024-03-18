@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy import select, and_, func 
+from schema.response import TopicImageURLResponse
 from fastapi import Depends
 from database.connection import get_db
-from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic
+from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic, Topic_image
 from typing import List 
 
 class Repository_jh:
@@ -49,9 +50,6 @@ class Repository_jh:
             
     # 날짜와 기업으로 토픽의 뉴스들을 불러오기    
     def get_news_by_date_and_company(self, start_date, end_date, company_id):
-        
-        news_topic_alias = aliased(News_topic)
-        news_alias = aliased(News)
 
         return self.session.query(News_topic).\
             join(Topic, News_topic.topic_id == Topic.topic_id).\
@@ -60,7 +58,7 @@ class Repository_jh:
                 Topic.topic_date <= end_date,
                 Topic.company_id == company_id,
             )).all()
-        
+   
     
     #뉴스 아이디로 뉴스 내용 가져오기    
     def get_news_by_news_id(self, news_id):
@@ -70,7 +68,16 @@ class Repository_jh:
         
         return [row[0] for row in result]
     
-             
+    #뉴스 토픽 기준 첫 번째 뉴스의 이미지 1개 url 골라오기
+    def get_topic_image_url_by_date_and_company(self, topic_id):
+        topic_image = self.session.query(Topic_image).\
+            filter(Topic_image.topic_id == topic_id).first()
+        
+        if topic_image:
+            return TopicImageURLResponse(image_url=topic_image.image_url)
+        else:
+            return TopicImageURLResponse()
+
         
     # 테스트 코드
     def get_topics_by_date_and_company(self, start_date, end_date, company_id) -> List[Topic]:
@@ -107,8 +114,6 @@ class Repository_jh:
                 
         return 0
     
-        
-        
-        
-                
+
+
     
