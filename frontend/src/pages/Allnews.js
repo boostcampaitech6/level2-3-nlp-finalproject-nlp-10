@@ -5,10 +5,10 @@ import "../css/layout.css";
 import { Grid } from "@mui/material";
 import TopNews from "../components/TopNews";
 import KeywordChart from "../components/KeywordChart";
-import KeywordDetail from "../components/KeywordDetail";
+import NewsDetail from "../components/NewsDetail";
 import axios from "axios";
 
-function Allnews({ startDate, endDate, company, confirm }) {
+function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   // const [date, setDate] = useState("");
 
   // const handleChangeDate = (event) => {
@@ -26,6 +26,7 @@ function Allnews({ startDate, endDate, company, confirm }) {
   const [topicTitleSummary, setTopicTitleSummary] = useState([]);
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
+  const [titleId, setTitleId] = useState(startTitleId);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -34,7 +35,8 @@ function Allnews({ startDate, endDate, company, confirm }) {
     const fetchGetNews = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_SERVER_URL}/jh/get-titles`,
+          `http://localhost:8000/jh/get-titles`,
+          // `${process.env.REACT_APP_SERVER_URL}/jh/get-titles`,
           {
             params: {
               start_date: startDate,
@@ -58,6 +60,11 @@ function Allnews({ startDate, endDate, company, confirm }) {
     };
     fetchGetNews();
   }, [confirm]);
+
+  const handleNewsClick = (value) => {
+    setTitleId(value);
+    console.log("selected title id: ", value);
+  };
 
   return (
     <>
@@ -86,6 +93,7 @@ function Allnews({ startDate, endDate, company, confirm }) {
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
+            chooseNews={handleNewsClick}
           />
 
           {/* 다이어그램 */}
@@ -109,7 +117,12 @@ function Allnews({ startDate, endDate, company, confirm }) {
             p: 4,
           }}
         >
-          <KeywordDetail />
+          <NewsDetail
+            titleId={titleId}
+            topicSummary={topicSummary}
+            title={title}
+            chooseNews={handleNewsClick}
+          />
         </Grid>
       </Grid>
     </>
