@@ -87,7 +87,7 @@ class News_company(Base):
     
     
 class Topic(Base):
-    __tablename__ = "TOPIC_AT"
+    __tablename__ = "TOPIC"
     
     # columns
     topic_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -106,7 +106,7 @@ class Topic(Base):
     topic_image = relationship("Topic_image", back_populates="topic", uselist=False)
     
 class News_topic(Base):
-    __tablename__ = "NEWS_TOPIC_AT"
+    __tablename__ = "NEWS_TOPIC"
     
     # columns
     news_topic_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -114,7 +114,7 @@ class News_topic(Base):
     
     # foreign key
     news_id = Column(Integer, ForeignKey("NEWS.news_id"))
-    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC.topic_id"))
     
     # many to one
     news = relationship("News", back_populates="news_topic_list")
@@ -131,7 +131,7 @@ class Topic_summary(Base):
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # foreign key
-    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC.topic_id"))
     
     # one to one
     topic = relationship("Topic", back_populates="topic_summary")
@@ -145,7 +145,7 @@ class Topic_image(Base):
     image_url = Column(VARCHAR(100), nullable=False)
     
     # foreign key
-    topic_id = Column(Integer, ForeignKey("TOPIC_AT.topic_id"))
+    topic_id = Column(Integer, ForeignKey("TOPIC.topic_id"))
     
     # one to one
     topic = relationship("Topic", back_populates="topic_image")

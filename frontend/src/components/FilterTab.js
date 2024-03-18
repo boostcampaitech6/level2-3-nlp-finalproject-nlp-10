@@ -9,6 +9,11 @@ import {
   MenuItem,
   Button,
 } from "@mui/material";
+import dayjs, { Dayjs } from 'dayjs';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 export default function FilterTab({
   changeStartDate,
@@ -16,19 +21,25 @@ export default function FilterTab({
   changeCompany,
   changeConfirm,
 }) {
+  const today = new Date();
+
+  // const [startDate, setStartDate] = useState(dayjs(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`));
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const handleChangeStartDate = (event) => {
-    changeStartDate(event.target.value);
-    setStartDate(event.target.value);
-    console.log("startDate", event.target.value);
+  const handleChangeStartDate = (value) => {
+    const formattedDate = dayjs(value).format("YYYY-MM-DD");
+    console.log("startDate", formattedDate);
+    console.log("startDate", typeof (formattedDate));
+    changeStartDate(formattedDate);
+    setStartDate(formattedDate);
   };
 
-  const handleChangeEndDate = (event) => {
-    changeEndDate(event.target.value);
-    setEndDate(event.target.value);
-    console.log("endDate", event.target.value);
+  const handleChangeEndDate = (value) => {
+    const formattedDate = dayjs(value).format("YYYY-MM-DD");
+    changeEndDate(formattedDate);
+    setEndDate(formattedDate);
+    console.log("endDate", formattedDate);
   };
 
   const [company, setCompany] = useState("");
@@ -48,67 +59,48 @@ export default function FilterTab({
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <Grid container>
-          <Grid md={2} sm={3} xs={4} sx={{ p: 2 }}>
-            <FormControl fullWidth sx={{ backgroundColor: "white" }}>
-              <InputLabel id="demo-simple-select-label">Start Date</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={startDate}
-                label="startDate"
-                onChange={handleChangeStartDate}
-                sx={{ height: "3rem", fontSize: "0.9rem" }}
-              >
-                <MenuItem value={"2023-11-01"}>2023-11-01</MenuItem>
-                <MenuItem value={"2023-11-02"}>2023-11-02</MenuItem>
-                <MenuItem value={"2023-11-03"}>2023-11-03</MenuItem>
-                <MenuItem value={"2023-11-04"}>2023-11-04</MenuItem>
-                <MenuItem value={"2023-11-05"}>2023-11-05</MenuItem>
-                <MenuItem value={"2023-11-06"}>2023-11-06</MenuItem>
-                <MenuItem value={"2023-11-07"}>2023-11-07</MenuItem>
-                <MenuItem value={"2023-11-08"}>2023-11-08</MenuItem>
-                <MenuItem value={"2023-11-09"}>2023-11-09</MenuItem>
-                <MenuItem value={"2023-11-10"}>2023-11-10</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid md={2} sm={3} xs={4} sx={{ p: 2 }}>
-            <FormControl fullWidth sx={{ backgroundColor: "white" }}>
-              <InputLabel id="demo-simple-select-label">End Date</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={endDate}
-                label="endDate"
-                onChange={handleChangeEndDate}
-                sx={{ height: "3rem", fontSize: "0.9rem" }}
-              >
-                <MenuItem value={"2023-11-01"}>2023-11-01</MenuItem>
-                <MenuItem value={"2023-11-02"}>2023-11-02</MenuItem>
-                <MenuItem value={"2023-11-03"}>2023-11-03</MenuItem>
-                <MenuItem value={"2023-11-04"}>2023-11-04</MenuItem>
-                <MenuItem value={"2023-11-05"}>2023-11-05</MenuItem>
-                <MenuItem value={"2023-11-06"}>2023-11-06</MenuItem>
-                <MenuItem value={"2023-11-07"}>2023-11-07</MenuItem>
-                <MenuItem value={"2023-11-08"}>2023-11-08</MenuItem>
-                <MenuItem value={"2023-11-09"}>2023-11-09</MenuItem>
-                <MenuItem value={"2023-11-10"}>2023-11-10</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid md={2} sm={3} xs={4} sx={{ p: 2 }}>
-            <FormControl fullWidth sx={{ backgroundColor: "white" }}>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Grid container sx={{ display: "flex", height: "4rem", alignItems: "center", p: 1 }}>
+          <DemoContainer components={['DatePicker']} >
+            <DatePicker
+              label="Start Date"
+              inputFormat={"yyyy-dd-mm"}
+              mask={"____-__-__"}
+              value={dayjs(startDate)}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  error: false,
+                },
+              }}
+              onChange={(newDate) => handleChangeStartDate(newDate)}
+              sx={{ width: "12rem" }}
+            />
+            <DatePicker
+              label="End Date"
+              inputFormat={"yyyy-dd-mm"}
+              mask={"____-__-__"}
+              value={dayjs(endDate)}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  error: false,
+                },
+              }}
+              onChange={(newDate) => handleChangeEndDate(newDate)}
+              sx={{ width: "12rem" }}
+            />
+          </DemoContainer>
+          <Grid pt={1} pl={2}>
+            <FormControl sx={{ backgroundColor: "white", width: "12rem" }}>
               <InputLabel id="demo-simple-select-label">Company</InputLabel>
               <Select
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
+                size="small"
                 value={company}
                 label="Company"
                 onChange={handleChangeCompany}
-                sx={{ height: "3rem", fontSize: "0.9rem" }}
               >
                 <MenuItem value={1}>삼성</MenuItem>
                 <MenuItem value={2}>SK하이닉스</MenuItem>
@@ -131,14 +123,14 @@ export default function FilterTab({
               </Select>
             </FormControl>
           </Grid>
-          <Grid md={2} sm={3} xs={4} sx={{ p: 2.7 }}>
-            <Button variant="outlined" onClick={handleChangeConfirm}>
-              조회
+          <Grid pt={1} pl={2}>
+            <Button onClick={handleChangeConfirm} sx={{ height: "2rem", fontFamily: "GmarketSansMedium", fontWeight: "bold", color: "#397d60", border: "2px solid #397d60", borderRadius: "1.2rem" }}>
+              조 회
             </Button>
           </Grid>
         </Grid>
-      </Box>
-      <Divider />
+        <Divider />
+      </LocalizationProvider >
     </>
   );
 }

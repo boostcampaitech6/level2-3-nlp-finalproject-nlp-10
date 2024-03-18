@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, BartForConditionalGeneration, TrainingArguments, set_seed, AdamW
+from transformers import AutoTokenizer, BartForConditionalGeneration, TrainingArguments, set_seed
 import torch
 import pandas as pd
 import numpy as np
@@ -18,9 +18,10 @@ torch.cuda.manual_seed_all(seed)
 set_seed(seed)
 
 training_args=TrainingArguments
-training_args.per_device_train_batch_size=16
-training_args.per_device_eval_batch_size=16
-training_args.learning_rate= 4e-05
+training_args.per_device_train_batch_size=11
+training_args.per_device_eval_batch_size=11
+training_args.learning_rate= 2e-05
+training_args.num_train_epochs = 1
 
 dataset_path = "../dataset"
 train_data_path = os.path.join(dataset_path, "Training")
@@ -29,7 +30,7 @@ valid_data_path = os.path.join(dataset_path, "Validation")
 model_name = 'hyunwoongko/kobart'
 
 def training(training_args, model_name, device):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained('EbanLee/kobart-summary-v1')
     model = BartForConditionalGeneration.from_pretrained(model_name)
 
     file_list = os.listdir(train_data_path)
@@ -37,11 +38,12 @@ def training(training_args, model_name, device):
 
     for file_name in file_list:     #학습 데이터 제작
         if file_name.endswith('.json'):
-            dataset = load_dataset(os.path.join(train_data_path, file_name))    #df = {'title' : [],'context' : []} title2개, 본문과 요약문 2세트씩
+            dataset = load_dataset(os.path.join(train_data_path, file_name), tokenizer)    #df = {'title' : [],'context' : []} title2개, 본문과 요약문 2세트씩
             
         elif file_name.endswith('.csv'):
             dataset = read_csv(os.path.join(train_data_path, file_name), tokenizer)    #df = {'title' : [],'context' : []}
-
+        
+        else: continue        
         train_data = pd.concat([train_data, dataset], ignore_index=True)
 
     train_data = make_dataset(tokenizer, train_data['context'], train_data['title'])  #(input_ids, attention_mask, token_type_ids, overflow_to_sample_mapping)
@@ -49,7 +51,7 @@ def training(training_args, model_name, device):
     train_sampler = RandomSampler(train_data)
     train_loader = DataLoader(train_data, sampler=train_sampler, batch_size = training_args.per_device_train_batch_size)
 
-    optimizer = AdamW(model.parameters(), lr = training_args.learning_rate, eps=training_args.adam_epsilon)
+    optimizer = torch.optim.AdamW(model.parameters(), lr = training_args.learning_rate, eps=training_args.adam_epsilon)
     model.to(device)
 
     print(f'\n!!!!!!!!!!!!!Train Start!!!!!!!!!!!!!!!!\n')
@@ -68,10 +70,6 @@ def training(training_args, model_name, device):
             context_input = {'input_ids':batch[0], 'attention_mask': batch[1], 'token_type_ids': batch[2]}
             target_input = {'input_ids':batch[3], 'attention_mask': batch[4], 'token_type_ids': batch[5]}
 
-            # output = model(input_ids = context_input['input_ids'], attention_mask = context_input['attention_mask'],
-            #                decoder_input_ids = target_input['input_ids']).logits
-            # loss = loss_fn(output[:, :-1, :].reshape(-1, output.size(-1)), target_input['input_ids'][:,1:].reshape(-1))
-            #위의 코드는 수정해야 사용할 수 있음
             loss = model(input_ids = context_input['input_ids'], attention_mask = context_input['attention_mask'],
                             labels = target_input['input_ids']).loss
         
@@ -79,14 +77,18 @@ def training(training_args, model_name, device):
             optimizer.step()
             model.zero_grad()
         
-            if global_step%500==0:
-                print(f'{global_step=} training{loss=}')
+            if global_step%1000==0:
+                print(f"\n{global_step=}, LR = {optimizer.param_groups[0]['lr']}, training_loss = {round(loss.item(), 8)}")
+
+            if global_step%10000==0:
+                torch.save(model, '../trained_model/model.pt')
+                print('save finish - model.pt')
 
             global_step+=1
 
     print(f'\n!!!!!!!!!!!!!Train Finish!!!!!!!!!!!!!!!!\n')
 
-    return model, tokenizer
+    return model.to("cpu"), tokenizer
 
 #-------------------------------------------------------
 if torch.cuda.is_available()==True:

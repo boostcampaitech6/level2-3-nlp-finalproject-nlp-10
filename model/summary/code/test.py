@@ -25,6 +25,13 @@ set_seed(seed)
 test_dataset_path = '../dataset'
 test_data = pd.read_csv(os.path.join(test_dataset_path, "samsung_feb.csv"))
 
+length_penalty=2.0,
+max_length=203,
+min_length=30,
+num_beams=6,
+repetition_penalty=2.0,
+no_repeat_ngram_size = 15
+
 print(test_data.head(2))
 context = test_data['contents']
 print(context.head(3))
@@ -48,24 +55,24 @@ with torch.no_grad():
         input_ids=input_ids.to("cuda"),
         bos_token_id=tokenizer.bos_token_id,
         eos_token_id=tokenizer.eos_token_id,
-        length_penalty=2.0,
-        max_length=256,
-        min_length=30,
-        num_beams=6,
-        repetition_penalty=2.0,
-        #no_repeat_ngram_size=,
+        length_penalty=length_penalty,
+        max_length=max_length,
+        min_length=min_length,
+        num_beams=num_beams,
+        repetition_penalty=repetition_penalty,
+        no_repeat_ngram_size=no_repeat_ngram_size,
         )
 
         summary_text_ids2 = model2.generate(
         input_ids=input_ids.to("cuda"),
         bos_token_id=tokenizer.bos_token_id,
         eos_token_id=tokenizer.eos_token_id,
-        length_penalty=2.0,
-        max_length=256,
-        min_length=30,
-        num_beams=6,
-        repetition_penalty=2.0,
-        #no_repeat_ngram_size=,
+        length_penalty=length_penalty,
+        max_length=max_length,
+        min_length=min_length,
+        num_beams=num_beams,
+        repetition_penalty=repetition_penalty,
+        no_repeat_ngram_size=no_repeat_ngram_size,
         )
 
         print(i, ': ', context[i])

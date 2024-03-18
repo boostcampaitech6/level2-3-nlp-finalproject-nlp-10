@@ -4,24 +4,27 @@ import "../css/layout.css";
 import { Box, Typography, List, ListItem } from "@mui/material";
 import { IoLogoDesignernews } from "react-icons/io5";
 import { IconContext } from "react-icons";
+import { BsEmojiSmileFill, BsEmojiNeutralFill, BsEmojiFrownFill } from "react-icons/bs";
+import { FaBrain } from "react-icons/fa";
+import { TbArrowBadgeRightFilled } from "react-icons/tb";
 
 export default function TopNews(props) {
   let date = "최신";
   return (
     <>
       <Box sx={{ display: "flex" }}>
-        <IconContext.Provider value={{ size: "25px" }}>
-          <IoLogoDesignernews />
+        <IconContext.Provider value={{ size: "30px" }}>
+          <TbArrowBadgeRightFilled color="#34b37d" />
         </IconContext.Provider>
         <Typography
           variant="h5"
           sx={{
-            fontFamily: "KOTRAHOPE",
-            fontWeight: "normal",
-            pl: 1.3,
+            fontFamily: "GmarketSansMedium",
+            fontWeight: "bold",
+            pl: 1,
           }}
         >
-          뉴스 Top5
+          Top5 뉴스
         </Typography>
       </Box>
 
@@ -34,12 +37,11 @@ export default function TopNews(props) {
             sx={{
               display: "list-item",
               p: 0.5,
-              fontSize: "1.5rem",
-              fontFamily: "omyu_pretty",
+              fontFamily: "Noto Sans KR",
               "&:hover": { fontWeight: "bold" }
             }}
           >
-            {it}
+            {it} {(idx % 2 == 0) ? <BsEmojiSmileFill color="#5dc2b1" /> : <BsEmojiFrownFill color="#ed9568" />}
           </ListItem>
         ))}
       </List>

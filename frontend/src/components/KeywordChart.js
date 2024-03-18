@@ -19,9 +19,10 @@ import {
   ListItem,
 } from "@mui/material";
 import { VscSymbolKeyword } from "react-icons/vsc";
-import diagram from "../img/diagram.png";
 import { IconContext } from "react-icons";
+import { FaBrain } from "react-icons/fa";
 import { BubbleChart } from "react-bubble-chart";
+import { TbArrowBadgeRightFilled } from "react-icons/tb";
 
 export default function KeywordChart(props) {
   const data = [
@@ -32,15 +33,15 @@ export default function KeywordChart(props) {
   return (
     <>
       <Box sx={{ display: "flex", mt: 3 }}>
-        <IconContext.Provider value={{ size: "25px" }}>
-          <VscSymbolKeyword />
+        <IconContext.Provider value={{ size: "30px" }}>
+          <TbArrowBadgeRightFilled color="#34b37d" />
         </IconContext.Provider>
         <Typography
           variant="h5"
           sx={{
-            fontFamily: "KOTRAHOPE",
-            fontWeight: "normal",
-            pl: 1.3,
+            fontFamily: "GmarketSansMedium",
+            fontWeight: "bold",
+            pl: 1,
           }}
         >
           핵심 키워드
