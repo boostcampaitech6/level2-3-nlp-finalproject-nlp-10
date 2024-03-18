@@ -6,7 +6,6 @@ import "../css/layout.css";
 import { Box } from "@mui/material";
 import NavBar from "../components/NavBar";
 import CompanyInfo from "./CompanyInfo";
-import Companynews from "./Companynews";
 import Allnews from "./Allnews";
 import FilterTab from "../components/FilterTab";
 
@@ -40,6 +39,7 @@ export default function Main() {
   const [endDate, setEndDate] = useState("2023-11-02");
   const [company, setCompany] = useState(1);
   const [confirm, setConfirm] = useState(true);
+  const [startTitleId, setStartTitleId] = useState(0);
 
   const handleChangeStartDate = (value) => {
     setStartDate(value);
@@ -58,7 +58,9 @@ export default function Main() {
 
   const handleChangeConfirm = (value) => {
     setConfirm(value);
+    setStartTitleId(0);
     console.log("confirm value", value);
+    console.log("title id: ", startTitleId)
   };
 
   return (
@@ -77,6 +79,7 @@ export default function Main() {
             endDate={endDate}
             company={company}
             confirm={confirm}
+            startTitleId={startTitleId}
           />
         )}
         {value == "1" && <CompanyInfo />}
