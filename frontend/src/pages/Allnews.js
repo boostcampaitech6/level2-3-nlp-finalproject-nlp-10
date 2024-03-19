@@ -26,6 +26,7 @@ function Allnews({ startDate, endDate, company, confirm }) {
   const [topicTitleSummary, setTopicTitleSummary] = useState([]);
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
+  const [sentiment, setSentiment] = useState([]);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -52,12 +53,15 @@ function Allnews({ startDate, endDate, company, confirm }) {
         );
         setTopicSummary(response.data.map((item) => item.topic_summary));
         setTitle(response.data.map((item) => item.title));
+        setSentiment(response.data.map((item) => item.sentiment));
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
     };
     fetchGetNews();
   }, [confirm]);
+
+  useEffect(() => {}, [title]);
 
   return (
     <>
@@ -86,6 +90,7 @@ function Allnews({ startDate, endDate, company, confirm }) {
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
+            sentiment={sentiment}
           />
 
           {/* 다이어그램 */}

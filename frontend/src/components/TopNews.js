@@ -57,9 +57,21 @@ export default function TopNews(props) {
               p: 0.5,
               fontSize: "1.5rem",
               fontFamily: "omyu_pretty",
+              color:
+                props.sentiment[idx] === 0
+                  ? "red"
+                  : props.sentiment[idx] === 1
+                  ? "green"
+                  : props.sentiment[idx] === 2
+                  ? "yellow"
+                  : "black",
             }}
           >
-            {it}
+            {it} {props.sentiment[idx] === 0 && "[부정]"}
+            {props.sentiment[idx] === 1 && "[긍정]"}
+            {props.sentiment[idx] !== 0 &&
+              props.sentiment[idx] !== 1 &&
+              "[중립]"}
           </ListItem>
         ))}
       </List>

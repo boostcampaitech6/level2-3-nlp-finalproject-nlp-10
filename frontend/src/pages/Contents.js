@@ -79,7 +79,14 @@ export default function Main() {
             confirm={confirm}
           />
         )}
-        {value == "1" && <CompanyInfo />}
+        {value == "1" && (
+          <CompanyInfo
+            startDate={startDate}
+            endDate={endDate}
+            company={company}
+            confirm={confirm}
+          />
+        )}
         {value == "2" && <Box></Box>}
       </div>
     </>
