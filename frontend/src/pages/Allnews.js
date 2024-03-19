@@ -28,6 +28,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   const [title, setTitle] = useState([]);
   const [sentiment, setSentiment] = useState([]);
   const [titleId, setTitleId] = useState(startTitleId);
+  const [diagram, setDiagram] = useState([]);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -57,6 +58,14 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         setTitle(response.data.map((item) => item.title));
         setTitleId(0);
         setSentiment(response.data.map((item) => item.sentiment));
+
+        // const newDiagram = topicTitleSummary
+        //   .slice(0, 5)
+        //   .map((topic, index) => ({
+        //     name: topic,
+        //     children: [{ name: topic, size: cnt[index] }],
+        //   }));
+        // setDiagram(newDiagram);
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
@@ -106,6 +115,8 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
+            sentiment={sentiment}
+            confirm={confirm}
           />
         </Grid>
 

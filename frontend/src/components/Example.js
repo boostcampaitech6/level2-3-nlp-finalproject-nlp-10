@@ -1,36 +1,32 @@
 import React from "react";
 import { Treemap, Tooltip } from "recharts";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Box, Typography, List, ListItem } from "@mui/material";
 
 const data = [
   {
     name: "axis",
-    children: [{ name: "Axes", size: 64 }],
+    size: 64,
   },
   {
     name: "controls",
-    children: [{ name: "AnchorControl", size: 32 }],
+    size: 32,
   },
   {
     name: "data",
-    children: [{ name: "Data", size: 8 }],
+    size: 8,
   },
   {
     name: "events",
-    children: [{ name: "DataEvent", size: 8 }],
+    size: 8,
   },
   {
     name: "legend",
-    children: [{ name: "Legend", size: 4 }],
+    size: 4,
   },
   {
     name: "operator",
-    children: [
-      {
-        name: "distortion",
-        children: [{ name: "BifocalDistortion", size: 3 }],
-      },
-    ],
+    size: 4,
   },
 ];
 
@@ -44,9 +40,20 @@ const COLORS = [
 ];
 
 const CustomizedContent = (props) => {
-  const { root, depth, x, y, width, height, index, colors, name, value } =
-    props;
-  console.log(value);
+  const {
+    root,
+    depth,
+    x,
+    y,
+    width,
+    height,
+    index,
+    colors,
+    name,
+    value,
+    diagram,
+    size,
+  } = props;
 
   return (
     <g>
@@ -77,7 +84,7 @@ const CustomizedContent = (props) => {
         </text>
       ) : null}
       {depth === 1 ? (
-        <text x={x + 4} y={y + 18} fill="#fff" fontSize={16} fillOpacity={0.9}>
+        <text x={x + 4} y={y + 18} fill="#fff" fontSize={8} fillOpacity={0.9}>
           {index + 1}
         </text>
       ) : null}
@@ -92,17 +99,29 @@ export default function Example({
   topicTitleSummary,
   title,
 }) {
+  const [diagram, setDiagram] = useState([]);
+  useEffect(() => {
+    const newDiagram = topicTitleSummary.slice(0, 6).map((title, index) => ({
+      name: title,
+      size: cnt[index],
+    }));
+    setDiagram(newDiagram);
+    console.log("diagram", diagram);
+  }, [title]);
+
   return (
-    <Treemap
-      width={400}
-      height={200}
-      data={data}
-      dataKey="size"
-      stroke="#fff"
-      fill="#8884d8"
-      content={<CustomizedContent colors={COLORS} />}
-    >
-      <Tooltip />
-    </Treemap>
+    <Box sx={{ border: "1px solid black" }}>
+      <Treemap
+        width={400}
+        height={200}
+        data={diagram}
+        dataKey="size"
+        stroke="#fff"
+        fill="#8884d8"
+        content={<CustomizedContent colors={COLORS} />}
+      >
+        <Tooltip />
+      </Treemap>
+    </Box>
   );
 }

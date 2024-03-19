@@ -60,7 +60,7 @@ export default function Main() {
     setConfirm(value);
     setStartTitleId(0);
     console.log("confirm value", value);
-    console.log("title id: ", startTitleId)
+    console.log("title id: ", startTitleId);
   };
 
   return (
