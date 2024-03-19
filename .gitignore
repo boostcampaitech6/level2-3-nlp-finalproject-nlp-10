@@ -1,0 +1,4 @@
+# backend
+/backend/src/.env
+/backend/src/__pycache__/
+/backend/src/database/__pycache__/
