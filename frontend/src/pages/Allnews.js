@@ -26,12 +26,13 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   const [topicTitleSummary, setTopicTitleSummary] = useState([]);
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
+  const [sentiment, setSentiment] = useState([]);
   const [titleId, setTitleId] = useState(startTitleId);
 
   useEffect(() => {
     const start_date = "2023-11-01";
     const end_date = "2023-11-02";
-    const company_id = 1;
+    const company_id = 48;
     const fetchGetNews = async () => {
       try {
         const response = await axios.get(
@@ -55,6 +56,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         setTopicSummary(response.data.map((item) => item.topic_summary));
         setTitle(response.data.map((item) => item.title));
         setTitleId(0);
+        setSentiment(response.data.map((item) => item.sentiment));
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
@@ -64,7 +66,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
 
   const handleNewsClick = (value) => {
     setTitleId(value);
-    console.log("selected title id: ", value);
+    console.log("selected title: ", title[value]);
   };
 
   return (
@@ -93,6 +95,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
+            sentiment={sentiment}
             chooseNews={handleNewsClick}
           />
 
@@ -119,6 +122,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
             topicId={topicId}
             topicSummary={topicSummary}
             title={title}
+            confirm={confirm}
             chooseNews={handleNewsClick}
           />
         </Grid>

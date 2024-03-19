@@ -37,7 +37,7 @@ export default function Main() {
 
   const [startDate, setStartDate] = useState("2023-11-01");
   const [endDate, setEndDate] = useState("2023-11-02");
-  const [company, setCompany] = useState(1);
+  const [company, setCompany] = useState(48);
   const [confirm, setConfirm] = useState(true);
   const [startTitleId, setStartTitleId] = useState(0);
 
@@ -82,7 +82,14 @@ export default function Main() {
             startTitleId={startTitleId}
           />
         )}
-        {value == "1" && <CompanyInfo />}
+        {value == "1" && (
+          <CompanyInfo
+            startDate={startDate}
+            endDate={endDate}
+            company={company}
+            confirm={confirm}
+          />
+        )}
         {value == "2" && <Box></Box>}
       </div>
     </>
