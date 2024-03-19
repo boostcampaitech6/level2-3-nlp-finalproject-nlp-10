@@ -1,4 +1,5 @@
 import React from 'react'
+import { useState, useEffect } from "react";
 import "../css/font.css";
 import "../css/layout.css";
 import {
@@ -11,6 +12,8 @@ import {
   Button,
   CardMedia,
 } from "@mui/material";
+import axios from "axios";
+
 import { SlArrowLeft, SlArrowRight } from "react-icons/sl";
 import { GoSquareFill } from "react-icons/go";
 import { MdFormatQuote } from "react-icons/md";
@@ -20,7 +23,29 @@ import titleBackground from "../img/titleBackground.png"
 
 export default function KeywordDetail(props) {
   let tags = ["언급량 1위", "매우 긍정적", "TV", "OLED"];
-  const pageNum = [0, 1, 2, 3, 4];
+  const [topicImage, setTopicImage] = useState([]);
+
+
+  const fetchNewsImage = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/jh/get-topic-image-url`,
+        // `${process.env.REACT_APP_SERVER_URL}/jh/get-titles`,
+        {
+          params: {
+            topic_id: 1,
+          },
+        }
+      );
+      setTopicImage(response.data.image_url)
+      console.log("news 이미지 불러오기", topicImage);
+      // if (response.data.length > 0) { setTopicImage(response.data.map((item) => item.image_url)) }
+      // else console.log("no data!");
+    } catch (err) {
+      console.log("news 이미지 불러오기 에러");
+    }
+  };
+  fetchNewsImage();
 
   return (
     <>
@@ -71,7 +96,7 @@ export default function KeywordDetail(props) {
               {/* 요약 뉴스 이미지 */}
               <Box
                 component="img"
-                src={samsung}
+                src={topicImage}
                 sx={{ objectFit: "cover", width: "100%", height: "100%", }}
               />
             </Box>

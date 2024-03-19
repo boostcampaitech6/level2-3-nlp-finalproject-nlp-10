@@ -92,12 +92,11 @@ export default function FilterTab({
             />
           </DemoContainer>
           <Grid pt={1} pl={2}>
-            <FormControl sx={{ backgroundColor: "white", width: "12rem" }}>
-              <InputLabel id="demo-simple-select-label">Company</InputLabel>
+            <FormControl size="small" sx={{ backgroundColor: "white", width: "12rem" }}>
+              <InputLabel id="demo-select-small-label">Company</InputLabel>
               <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                size="small"
+                labelId="demo-select-small-label"
+                id="demo-select-small"
                 value={company}
                 label="Company"
                 onChange={handleChangeCompany}

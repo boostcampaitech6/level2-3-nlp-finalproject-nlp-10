@@ -54,6 +54,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         );
         setTopicSummary(response.data.map((item) => item.topic_summary));
         setTitle(response.data.map((item) => item.title));
+        setTitleId(0);
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
@@ -115,6 +116,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         >
           <NewsDetail
             titleId={titleId}
+            topicId={topicId}
             topicSummary={topicSummary}
             title={title}
             chooseNews={handleNewsClick}

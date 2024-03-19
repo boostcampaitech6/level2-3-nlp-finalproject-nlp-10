@@ -64,7 +64,7 @@ export default function Main() {
               {/* <IconContext.Provider value={{ size: "4rem" }}><BsGlobe2 color='#57c1fa' /></IconContext.Provider> */}
               <Typography display="inline" sx={{ fontSize: '6rem', lineHeight: '5.5rem', pt: 2, pl: 1 }}>제</Typography>
               <Typography sx={{ fontSize: '6rem', lineHeight: '5.5rem', pl: 1 }}>
-                뉘우스
+                뉴우스
               </Typography>
               <Divider sx={{ borderColor: "black", borderBottomWidth: 4 }} />
             </Box>
