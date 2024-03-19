@@ -1,1 +1,48 @@
+.bubble-chart-container {
+  width: 100%;
+  height: 100%;
+}
 
+.node {
+  font: 11px sans-serif;
+}
+
+.node circle {
+  fill: #ccc;
+  cursor: pointer;
+}
+
+.node text {
+  font-size: 12px;
+  text-align: center;
+  /* text-anchor: middle; 텍스트를 중앙 정렬 */
+  fill: #000;
+}
+
+.node text.small {
+  font-size: 10px;
+}
+
+.node--leaf {
+  cursor: default;
+}
+
+.node--leaf circle {
+  fill: #fff;
+}
+
+.node--leaf text {
+  /* pointer-events: none; */
+  display: none; /* leaf 노드의 텍스트는 숨김 */
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 8px;
+  /* background-color: rgba(0, 0, 0, 0.8); */
+  color: #fff;
+  font-size: 14px;
+  pointer-events: none;
+}

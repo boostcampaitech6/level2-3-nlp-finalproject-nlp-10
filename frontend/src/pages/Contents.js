@@ -37,7 +37,7 @@ export default function Main() {
 
   const [startDate, setStartDate] = useState("2023-11-01");
   const [endDate, setEndDate] = useState("2023-11-02");
-  const [company, setCompany] = useState(1);
+  const [company, setCompany] = useState(48);
   const [confirm, setConfirm] = useState(true);
   const [startTitleId, setStartTitleId] = useState(0);
 
@@ -60,7 +60,7 @@ export default function Main() {
     setConfirm(value);
     setStartTitleId(0);
     console.log("confirm value", value);
-    console.log("title id: ", startTitleId)
+    console.log("title id: ", startTitleId);
   };
 
   return (

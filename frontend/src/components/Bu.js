@@ -34,6 +34,7 @@ export default function Bu({
   topicSummary,
   topicTitleSummary,
   title,
+  diagram,
 }) {
   const data01 = [
     { name: "Group A", value: 400 },
@@ -44,27 +45,28 @@ export default function Bu({
     { name: "Group F", value: 189 },
   ];
 
-  const [diagram, setDiagram] = useState([]);
+  // const [diagram, setDiagram] = useState([]);
 
-  useEffect(() => {
-    const newDiagram = topicTitleSummary.slice(0, 5).map((title, index) => ({
-      name: title,
-      value: cnt[index],
-      fill:
-        index === 0
-          ? "#D37676"
-          : index === 1
-          ? "#F1C27B"
-          : index === 2
-          ? "#FFD89C"
-          : index === 3
-          ? "#FFFF00"
-          : index === 4
-          ? "#A2CDB0"
-          : "#85A389",
-    }));
-    setDiagram(newDiagram);
-  }, [title]);
+  // useEffect(() => {
+  //   const newDiagram = topicTitleSummary.slice(0, 5).map((title, index) => ({
+  //     name: title,
+  //     value: cnt[index],
+  //     fill:
+  //       index === 0
+  //         ? "#D37676"
+  //         : index === 1
+  //         ? "#F1C27B"
+  //         : index === 2
+  //         ? "#FFD89C"
+  //         : index === 3
+  //         ? "#FFFF00"
+  //         : index === 4
+  //         ? "#A2CDB0"
+  //         : "#85A389",
+  //   }));
+  //   console.log(diagram);
+  //   setDiagram(newDiagram);
+  // }, [title]);
 
   return (
     <Box sx={{ display: "flex" }}>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey, Date 
+from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey, Date, Text 
 from datetime import datetime 
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,8 +13,9 @@ class News(Base):
     news_id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(VARCHAR(100), nullable=False)
     date = Column(DateTime, nullable=False)
-    contents = Column(VARCHAR(3000), nullable=False)
-    url = Column(VARCHAR(100), nullable=False)
+    contents = Column(Text, nullable=False)
+    url = Column(VARCHAR(500), nullable=False)
+    img_url = Column(VARCHAR(500), nullable=False)
     # del_yn = Column(VARCHAR(1), nullable=False, default='N')
     
     # one to many
