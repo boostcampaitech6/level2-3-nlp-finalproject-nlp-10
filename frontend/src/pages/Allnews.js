@@ -26,6 +26,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   const [topicTitleSummary, setTopicTitleSummary] = useState([]);
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
+  const [sentiment, setSentiment] = useState([]);
   const [titleId, setTitleId] = useState(startTitleId);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         );
         setTopicSummary(response.data.map((item) => item.topic_summary));
         setTitle(response.data.map((item) => item.title));
+        setSentiment(response.data.map((item) => item.sentiment));
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
@@ -92,7 +94,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
-            chooseNews={handleNewsClick}
+            sentiment={sentiment}
           />
 
           {/* 다이어그램 */}

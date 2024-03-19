@@ -4,7 +4,11 @@ import "../css/layout.css";
 import { Box, Typography, List, ListItem } from "@mui/material";
 import { IoLogoDesignernews } from "react-icons/io5";
 import { IconContext } from "react-icons";
-import { BsEmojiSmileFill, BsEmojiNeutralFill, BsEmojiFrownFill } from "react-icons/bs";
+import {
+  BsEmojiSmileFill,
+  BsEmojiNeutralFill,
+  BsEmojiFrownFill,
+} from "react-icons/bs";
 import { FaBrain } from "react-icons/fa";
 import { TbArrowBadgeRightFilled } from "react-icons/tb";
 
@@ -38,10 +42,15 @@ export default function TopNews(props) {
               display: "list-item",
               p: 0.5,
               fontFamily: "Noto Sans KR",
-              "&:hover": { fontWeight: "bold" }
+              "&:hover": { fontWeight: "bold" },
             }}
           >
-            {it} {(idx % 2 == 0) ? <BsEmojiSmileFill color="#5dc2b1" /> : <BsEmojiFrownFill color="#ed9568" />}
+            {it}{" "}
+            {idx % 2 == 0 ? (
+              <BsEmojiSmileFill color="#5dc2b1" />
+            ) : (
+              <BsEmojiFrownFill color="#ed9568" />
+            )}
           </ListItem>
         ))}
       </List>
