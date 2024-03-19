@@ -16,7 +16,7 @@ export default function TopNews(props) {
   let date = "최신";
   return (
     <>
-      <Box sx={{ display: "flex" }}>
+      <Box sx={{ display: "flex", pt: 2 }}>
         <IconContext.Provider value={{ size: "30px" }}>
           <TbArrowBadgeRightFilled color="#34b37d" />
         </IconContext.Provider>
@@ -33,7 +33,7 @@ export default function TopNews(props) {
       </Box>
 
       {/* 뉴스 기사 제목 */}
-      <List sx={{ p: 1, pl: 2.5, listStyleType: "square" }}>
+      <List sx={{ height: "30vh", p: 1, pl: 2.5, listStyleType: "square" }}>
         {props.title.slice(0, 5).map((it, idx) => (
           <ListItem
             key={idx}
@@ -46,11 +46,10 @@ export default function TopNews(props) {
             }}
           >
             {it}{" "}
-            {idx % 2 == 0 ? (
-              <BsEmojiSmileFill color="#5dc2b1" />
-            ) : (
-              <BsEmojiFrownFill color="#ed9568" />
-            )}
+            {props.sentiment[idx] == 2 &&
+              <BsEmojiSmileFill color="#5dc2b1" />}
+            {props.sentiment[idx] == 1 && <BsEmojiNeutralFill color="#729be0" />}
+            {props.sentiment[idx] == 0 && <BsEmojiFrownFill color="#ed9568" />}
           </ListItem>
         ))}
       </List>
