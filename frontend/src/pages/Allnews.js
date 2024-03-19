@@ -31,6 +31,9 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   const [diagram, setDiagram] = useState([]);
 
   useEffect(() => {
+    const start_date = "2023-11-01";
+    const end_date = "2023-11-02";
+    const company_id = 48;
     const fetchGetNews = async () => {
       try {
         const response = await axios.get(
@@ -53,6 +56,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         );
         setTopicSummary(response.data.map((item) => item.topic_summary));
         setTitle(response.data.map((item) => item.title));
+        setTitleId(0);
         setSentiment(response.data.map((item) => item.sentiment));
 
         // const newDiagram = topicTitleSummary
@@ -71,7 +75,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
 
   const handleNewsClick = (value) => {
     setTitleId(value);
-    console.log("selected title id: ", value);
+    console.log("selected title: ", title[value]);
   };
 
   return (
@@ -101,6 +105,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
             topicTitleSummary={topicTitleSummary}
             title={title}
             sentiment={sentiment}
+            chooseNews={handleNewsClick}
           />
 
           {/* 다이어그램 */}
@@ -125,8 +130,10 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
         >
           <NewsDetail
             titleId={titleId}
+            topicId={topicId}
             topicSummary={topicSummary}
             title={title}
+            confirm={confirm}
             chooseNews={handleNewsClick}
           />
         </Grid>
