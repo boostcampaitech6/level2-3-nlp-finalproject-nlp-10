@@ -5,10 +5,10 @@ import "../css/layout.css";
 import { Grid } from "@mui/material";
 import TopNews from "../components/TopNews";
 import KeywordChart from "../components/KeywordChart";
-import KeywordDetail from "../components/KeywordDetail";
+import NewsDetail from "../components/NewsDetail";
 import axios from "axios";
 
-function Allnews({ startDate, endDate, company, confirm }) {
+function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
   // const [date, setDate] = useState("");
 
   // const handleChangeDate = (event) => {
@@ -27,6 +27,7 @@ function Allnews({ startDate, endDate, company, confirm }) {
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
   const [sentiment, setSentiment] = useState([]);
+  const [titleId, setTitleId] = useState(startTitleId);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -35,7 +36,8 @@ function Allnews({ startDate, endDate, company, confirm }) {
     const fetchGetNews = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_SERVER_URL}/jh/get-titles`,
+          `http://localhost:8000/jh/get-titles`,
+          // `${process.env.REACT_APP_SERVER_URL}/jh/get-titles`,
           {
             params: {
               start_date: startDate,
@@ -61,7 +63,10 @@ function Allnews({ startDate, endDate, company, confirm }) {
     fetchGetNews();
   }, [confirm]);
 
-  useEffect(() => {}, [title]);
+  const handleNewsClick = (value) => {
+    setTitleId(value);
+    console.log("selected title id: ", value);
+  };
 
   return (
     <>
@@ -84,7 +89,6 @@ function Allnews({ startDate, endDate, company, confirm }) {
         >
           {/* 오늘 뉴스 */}
           <TopNews
-            date={"today"}
             cnt={cnt}
             topicId={topicId}
             topicSummary={topicSummary}
@@ -95,15 +99,12 @@ function Allnews({ startDate, endDate, company, confirm }) {
 
           {/* 다이어그램 */}
           <KeywordChart
-            date={"today"}
             cnt={cnt}
             topicId={topicId}
             topicSummary={topicSummary}
             topicTitleSummary={topicTitleSummary}
             title={title}
           />
-          {/*어제 뉴스*/}
-          {/* <TopNews date={'yesterday'} /> */}
         </Grid>
 
         {/* 본문 우측 */}
@@ -114,7 +115,12 @@ function Allnews({ startDate, endDate, company, confirm }) {
             p: 4,
           }}
         >
-          <KeywordDetail />
+          <NewsDetail
+            titleId={titleId}
+            topicSummary={topicSummary}
+            title={title}
+            chooseNews={handleNewsClick}
+          />
         </Grid>
       </Grid>
     </>

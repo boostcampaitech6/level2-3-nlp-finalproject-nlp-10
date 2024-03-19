@@ -81,6 +81,7 @@ def get_topic_titles_handler(
         
     return result
 
+
 # 테스트 코드
 # 뉴스 요약 정보 불러오기 코드
 @router.get("/get-news")
@@ -185,3 +186,11 @@ def get_sentiment_handler(
     # sentiment = count_sentiment_occurrences(sentiments)
     return sentiments
 
+
+@router.get("/get-topic-image-url")
+def some_path_function(
+    topic_id : int,
+    repo: Repository_jh = Depends()
+    ):
+
+    return repo.get_topic_image_url_by_date_and_company(topic_id)

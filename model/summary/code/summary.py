@@ -21,9 +21,10 @@ torch.manual_seed(seed) # torch random seed 고정
 torch.cuda.manual_seed_all(seed)
 
 training_args = TrainingArguments
-training_args.per_device_train_batch_size=10
-training_args.per_device_eval_batch_size=10
-training_args.learning_rate= 4e-05
+training_args.per_device_train_batch_size=12
+training_args.per_device_eval_batch_size=12
+training_args.learning_rate= 2e-05
+training_args.num_train_epochs=3
 
 if torch.cuda.is_available()==True:
     device = "cuda"
@@ -32,7 +33,7 @@ else:
 
 set_seed(seed)
 
-model_name = "EbanLee/kobart-summary-v1"
+model_name = 'hyunwoongko/kobart'
 
 parser = argparse.ArgumentParser(description="")
 
@@ -48,8 +49,6 @@ if args.do_train == 'True':
     tokenizer = AutoTokenizer.from_pretrained(model_name)   #토크나이저에 스페셜토큰을 추가하는 등의 일을 아래의 training함수 내부에서 한다면 따로 받아야함
     model = training(training_args, model_name, device)
     torch.save(model, '../trained_model/model.pt')
-    model.save_pretrained('../trained_model')
-    tokenizer.save_pretrained('../save_tokenizer')
     print(f'Save Finish!')
 
 else : 
