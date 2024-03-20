@@ -29,6 +29,11 @@ def count_topic_occurrences(news_topics):
         topic_counts = Counter(topic.topic_id for topic in news_topics)
         print(topic_counts)
         return list(topic_counts.values())
+    
+def count_sentiment_occurrences(sentiments):
+    sentiment_counts = Counter(entry["sentiment_value"] for entry in sentiments)
+    most_common_value = max(sentiment_counts, key=sentiment_counts.get)
+    return most_common_value[0]
 
 # 뉴스 요약 정보 불러오기 코드
 @router.get("/get-titles")
@@ -56,8 +61,8 @@ def get_topic_titles_handler(
     news = repo.get_news_by_news_id(news) 
     
     # 뉴스에서 가장 많이 등장한 sentiment_value 가져오기
-    # sentiments = repo.get_news_sentiment_by_date_and_company(start_date, end_date, company_id)
-    # sentiment = count_sentiment_occurrences(sentiments)
+    sentiments = repo.get_news_sentiment_by_date_and_company(start_date, end_date, company_id)
+    sentiment = count_sentiment_occurrences(sentiments)
     
     # topic, topic_title_summary, topic_summary, cnt를 response
     result = []
@@ -67,13 +72,15 @@ def get_topic_titles_handler(
             "topic_title_summary": topic.topic_title_summary,
             "topic_summary": topic.topic_summary,
             "cnt":  num,
-            "title": new
+            "title": new,
+            "sentiment": sentiment[0]
         }
         result.append(new_dict)
         
     result = sorted(result, key=lambda x: x["cnt"], reverse=True)     
         
     return result
+
 
 # 테스트 코드
 # 뉴스 요약 정보 불러오기 코드
@@ -179,3 +186,11 @@ def get_sentiment_handler(
     # sentiment = count_sentiment_occurrences(sentiments)
     return sentiments
 
+
+@router.get("/get-topic-image-url")
+def some_path_function(
+    topic_id : int,
+    repo: Repository_jh = Depends()
+    ):
+
+    return repo.get_topic_image_url_by_date_and_company(topic_id)
