@@ -5,6 +5,7 @@ from datetime import datetime
 from collections import Counter
 from functools import reduce
 
+import time
 import random
 import numpy as np
 import pandas as pd
@@ -15,13 +16,14 @@ from dotenv import load_dotenv
 import os
 from loguru import logger
 import tenacity
-from tqdm import tqdm, trange
+from tqdm import tqdm
+import argparse
 
 load_dotenv()
 tqdm.pandas()
 
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, BartForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, BartForConditionalGeneration, PreTrainedTokenizerFast
 from sentence_transformers import SentenceTransformer
 import hdbscan
 
@@ -33,7 +35,7 @@ def fix_seed(seed = 42):
 
 
 class Engine:
-    def __init__(self, db_user, db_password, db_host, topic_n, db_database='AUTOMATION', db_port=3306, period=24, day_diff = 0):
+    def __init__(self, db_user, db_password, db_host, topic_n, db_database='AUTOMATION', db_port=3306, period=8, day_diff = 0):
         # MySQL 서버 정보 설정
         self.db_config = {
             'user': db_user,
@@ -49,16 +51,22 @@ class Engine:
         # 수집하는 시간 업데이트
         if period == 24:
             self.today = (datetime.now() - timedelta(days=day_diff)).strftime('%Y-%m-%d')
-            self.start_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=0, minute=0, second=0, microsecond=0)
-            self.end_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=23, minute=59, second=59, microsecond=0)
+            self.news_start_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=0, minute=0, second=0, microsecond=0)
+            self.news_end_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=23, minute=59, second=59, microsecond=0)
+            self.topic_start_time = self.news_start_time
+            self.topic_end_time = self.topic_end_time = self.news_end_time
 
         else:
-            self.today = datetime.now().strftime('%Y-%m-%d')
-            self.start_time = (datetime.now() - timedelta(hours=period)).replace(minute=0, second=0, microsecond=0)
-            self.end_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-        
-        logger.info(f"Automation Process Start : {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {self.end_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    
+            self.today = (datetime.now() - timedelta(days=day_diff)).strftime('%Y-%m-%d')
+            self.news_start_time = (datetime.now() - timedelta(days=day_diff, hours=period)).replace(minute=0, second=0, microsecond=0)
+            self.news_end_time = (datetime.now() - timedelta(days=day_diff, hours=1)).replace(minute=59, second=59, microsecond=0)
+            self.topic_start_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=0, minute=0, second=0, microsecond=0)
+            self.topic_end_time = (datetime.now() - timedelta(days=day_diff)).replace(hour=23, minute=59, second=59, microsecond=0)
+            
+        logger.info(f"""Automation Process Start 
+                        TIME PERIOD : NEWS RELATED TABLES  {self.news_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')}
+                                      TOPIC RELATED TABLES {self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')}
+                        """)
     
     def db_connection(self):
         # MySQL 연결 설정
@@ -88,6 +96,22 @@ class Engine:
 
         finally:
             connection.close()
+            
+    @tenacity.retry(wait=tenacity.wait_fixed(3), stop=tenacity.stop_after_attempt(5))
+    def delete_data_from_db(self, query, description=''):
+        try:
+            connection = self.db_connection()
+            with connection.cursor() as cursor:
+                # 데이터 삭제 및 커밋
+                cursor.execute(query)
+                connection.commit()
+
+        except Exception as e:
+            logger.error(f"{description} | ERROR : {e}")
+            raise ValueError(f'ERROR : {description}')    
+
+        finally:
+            connection.close()
     
     @tenacity.retry(wait=tenacity.wait_fixed(3), stop=tenacity.stop_after_attempt(5))
     def select_data_from_db(self, query, description=''):
@@ -107,7 +131,7 @@ class Engine:
         return result
     
     
-    def fill_company(self, path='./utils/company.csv') -> None:
+    def fill_company(self, path='/data/ephemeral/home/data/utils/company.csv') -> None:
         table_name = 'COMPANY'
         logger.info(f"INSERT {table_name} TABLE START")
         
@@ -127,7 +151,7 @@ class Engine:
         
     async def fill_news(self):
         table_name = 'NEWS'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.news_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         # 뉴스 데이터 크롤링.
         await self.crawling_news()
@@ -135,6 +159,12 @@ class Engine:
         
         # 수집한 데이터 로드 및 전처리
         news_info = self.preprocess_news()
+        
+        # 해당 기간에 뉴스가 없다면 종료
+        if news_info == None:
+            logger.info(f"NO NEWS BETWEEN {start_time} ~ {end_time}")
+            return False
+        
         logger.info(f"NEWS Preprocessing Done")
         
         self.insert_data_to_db(query = f"INSERT INTO {self.db_config['database']}.{table_name} (date, url, title, contents, relate_stock, img_url) \
@@ -143,12 +173,12 @@ class Engine:
                                description = f'INSERT {table_name} TABLE')
         logger.info(f"INSERT {table_name} TABLE DONE : {start_time} ~ {end_time}")
     
-    
+        return True
     
     
     def fill_news_company(self):
         table_name = 'NEWS_COMPANY'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.news_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")        
         # NEWS, COMPANY 데이터 조회, 
         news_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.NEWS WHERE date BETWEEN '{start_time}' AND '{end_time}';", 
@@ -170,7 +200,7 @@ class Engine:
     
     def fill_summary(self):
         table_name = 'SUMMARY'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.news_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         # NEWS, COMPANY 데이터 조회, 
         news_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.NEWS WHERE date BETWEEN '{start_time}' AND '{end_time}';", 
@@ -179,7 +209,6 @@ class Engine:
         
         # NEWS 요약 데이터 생성
         summary_info = self.preprocess_summary(news_data=news_data, 
-                                               model_path= './model/summary/summary_model.pt',
                                                pretrained_model_name_or_path="EbanLee/kobart-summary-v2")
         logger.info(f"NEWS {table_name} Done")
         
@@ -193,7 +222,7 @@ class Engine:
     
     def fill_sentiment(self):
         table_name = 'SENTIMENT'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.news_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT SENTIMENT TABLE START : {start_time} ~ {end_time}")
         
         # NEWS, COMPANY 데이터 조회, 
@@ -203,7 +232,6 @@ class Engine:
         
         # NEWS SENTIMENT 데이터 생성
         sentiment_info = self.preprocess_sentiemnt(news_data = news_data,
-                                                   model_path='model/sentiment',
                                                    pretrained_model_name_or_path='model/sentiment')
         logger.info(f"NEWS {table_name} Done")
         
@@ -217,7 +245,26 @@ class Engine:
     
     def fill_topic(self):
         table_name = 'TOPIC'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # [TODO] 여기서 TOPIC, NEWS_TOPIC, TOPIC_SUMMARY, TOPIC_IMAGE 모두 지워야함.
+        remove_tables = ['TOPIC_IMAGE', 'TOPIC_SUMMARY', 'NEWS_TOPIC']
+        for remove_table in remove_tables:
+            self.delete_data_from_db(query=f"""
+                                                DELETE rt
+                                                FROM {self.db_config['database']}.{remove_table} AS rt
+                                                JOIN {self.db_config['database']}.TOPIC AS t ON rt.topic_id = t.topic_id
+                                                WHERE t.startdate BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}';
+                                                """, 
+                                    description=f'DELECT {remove_table} TABLES {start_time} ~ {end_time}')
+            
+            logger.info(f"DELETE {remove_table} TABLE : {start_time} ~ {end_time}")
+            time.sleep(0.3)
+        
+        self.delete_data_from_db(query=f"""DELETE FROM {self.db_config['database']}.{table_name} WHERE startdate BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}';""", 
+                                 description=f'DELECT {table_name} TABLES {start_time} ~ {end_time}')
+        
+        
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         # NEWS, SUMMARY, COMPANY, NEWS_COMPANY 테이블병합 데이터 조회, 
         merge_data = self.select_data_from_db(query = f"""
@@ -236,7 +283,7 @@ class Engine:
                                                                 JOIN 
                                                                     {self.db_config['database']}.COMPANY ON {self.db_config['database']}.NEWS_COMPANY.company_id = {self.db_config['database']}.COMPANY.company_id
                                                                 WHERE 
-                                                                    {self.db_config['database']}.NEWS.date BETWEEN '{self.start_time}' AND '{self.end_time}';
+                                                                    {self.db_config['database']}.NEWS.date BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}';
                                             """, 
                                             
                                             description='SELECT NEWS, SUMMARY MERGE TABLE')
@@ -257,10 +304,11 @@ class Engine:
 
     def fill_news_topic(self):
         table_name = 'NEWS_TOPIC'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         
-        topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC WHERE startdate BETWEEN '{self.start_time}' AND '{self.end_time}';", 
+        topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC \
+                                                        WHERE startdate BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}';", 
                                                     description='SELECT TOPIC TABLE')
         logger.info(f"{table_name} SELECT Done")
 
@@ -277,13 +325,13 @@ class Engine:
         
     def fill_topic_summary(self):
         table_name = 'TOPIC_SUMMARY'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         merge_data = self.select_data_from_db(query = f"""
                                                             SELECT T.topic_id,
                                                                 T.startdate,
                                                                 T.max_news_id,
-                                                                {self.db_config['database']}.NEWS.title,
+                                                                {self.db_config['database']}.NEWS.contents,
                                                                 {self.db_config['database']}.SUMMARY.summary_text
                                                             FROM (
                                                                 SELECT {self.db_config['database']}.NEWS_TOPIC.topic_id, 
@@ -291,7 +339,7 @@ class Engine:
                                                                        MAX({self.db_config['database']}.NEWS_TOPIC.news_id) AS max_news_id
                                                                 FROM {self.db_config['database']}.NEWS_TOPIC
                                                                 JOIN {self.db_config['database']}.TOPIC ON {self.db_config['database']}.NEWS_TOPIC.topic_id = {self.db_config['database']}.TOPIC.topic_id
-                                                                WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.start_time}' AND '{self.end_time}'
+                                                                WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}'
                                                                 GROUP BY {self.db_config['database']}.NEWS_TOPIC.topic_id
                                                             ) AS T
                                                             JOIN {self.db_config['database']}.NEWS ON T.max_news_id = {self.db_config['database']}.NEWS.news_id
@@ -314,7 +362,7 @@ class Engine:
     
     def fill_topic_image(self):
         table_name = 'TOPIC_IMAGE'
-        start_time, end_time = self.start_time.strftime('%Y-%m-%d %H:%M:%S'), self.end_time.strftime('%Y-%m-%d %H:%M:%S')
+        start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         
         topic_data = self.select_data_from_db(query = f"""
@@ -324,7 +372,7 @@ class Engine:
                                                         SELECT {self.db_config['database']}.NEWS_TOPIC.topic_id, MAX({self.db_config['database']}.NEWS_TOPIC.news_id) AS max_news_id
                                                         FROM {self.db_config['database']}.NEWS_TOPIC
                                                         JOIN {self.db_config['database']}.TOPIC ON {self.db_config['database']}.NEWS_TOPIC.topic_id = {self.db_config['database']}.TOPIC.topic_id
-                                                        WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.start_time}' AND '{self.end_time}'
+                                                        WHERE {self.db_config['database']}.TOPIC.startdate BETWEEN '{self.topic_start_time}' AND '{self.topic_end_time}'
                                                         GROUP BY {self.db_config['database']}.NEWS_TOPIC.topic_id
                                                     ) AS T
                                                     JOIN {self.db_config['database']}.NEWS ON T.max_news_id = {self.db_config['database']}.NEWS.news_id                                          
@@ -343,10 +391,10 @@ class Engine:
         
         
     def preprocess_news(self):
-        df_main = pd.read_csv('./data/mainnews_all.csv')
-        df_company = pd.read_csv('./data/companynews_all.csv')
-        df_disclosure = pd.read_csv('./data/disclosurenews_all.csv')
-        df_economy = pd.read_csv('./data/economynews_all.csv')
+        df_main = pd.read_csv('/data/ephemeral/home/data/data/mainnews_all.csv')
+        df_company = pd.read_csv('/data/ephemeral/home/data/data/companynews_all.csv')
+        df_disclosure = pd.read_csv('/data/ephemeral/home/data/data/disclosurenews_all.csv')
+        df_economy = pd.read_csv('/data/ephemeral/home/data/data/economynews_all.csv')
 
         # 데이터 전처리
         df_news = pd.concat([df_main, df_company, df_disclosure, df_economy])
@@ -354,7 +402,11 @@ class Engine:
 
         # 수집하는 기간에 해당하는 뉴스 확인, datetime 형식 변경 : 오후 12시 : 24시 --> 12시
         df_news['date'] = pd.to_datetime(df_news['date'].apply(lambda x : x.replace("24:", "12:")))
-        df_news = df_news[(df_news['date'] >= self.start_time) & (df_news['date'] < self.end_time)]
+        df_news = df_news[(df_news['date'] >= self.news_start_time) & (df_news['date'] < self.news_end_time)]
+        
+        if len(df_news) == 0:
+            return None
+        
         df_news = df_news.sort_values(by='date')
 
         # url 기준으로 중복 뉴스 제거
@@ -395,7 +447,7 @@ class Engine:
         return news_company_info
     
     
-    def preprocess_summary(self, news_data, model_path='./model/summary/summary_model.pt', pretrained_model_name_or_path="EbanLee/kobart-summary-v2"):
+    def preprocess_summary(self, news_data, pretrained_model_name_or_path="EbanLee/kobart-summary-v2"):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # tokenizer 및 모델 로드
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
@@ -409,6 +461,9 @@ class Engine:
                 news_id_list = [data['news_id'] for data in news_data[s_i:e_i]]
                 contents_list = [data['contents'] for data in news_data[s_i:e_i]]
 
+                if len(contents_list) == 0:
+                    break
+                
                 # input data encoding
                 inputs = tokenizer.batch_encode_plus(contents_list, 
                                                     return_tensors="pt", 
@@ -434,7 +489,7 @@ class Engine:
         return summary_info
     
     
-    def preprocess_sentiemnt(self, news_data, model_path='./model/sentiment', pretrained_model_name_or_path='./model/sentiment'):
+    def preprocess_sentiemnt(self, news_data, pretrained_model_name_or_path='/data/ephemeral/home/data/model/sentiment'):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
         model = AutoModelForSequenceClassification.from_pretrained(pretrained_model_name_or_path, 
@@ -448,6 +503,9 @@ class Engine:
                 s_i, e_i = i*30, min((i+1)*30, len(news_data)+1)
                 news_id_list = [data['news_id'] for data in news_data[s_i:e_i]]
                 title_list = [data['title'] for data in news_data[s_i:e_i]]
+                
+                if len(title_list) == 0:
+                    break
                 
                 # Tokenizing Inputs and Predict
                 input = tokenizer(title_list, truncation=True, padding=True, return_tensors='pt').to(device)
@@ -487,7 +545,7 @@ class Engine:
                                         'company_id' : company_id,
                                         'news_id_list': news_id_list,
                                         'topic_date' : topic_date,
-                                        'start_date' : self.start_time,
+                                        'start_date' : self.topic_start_time,
                 })
                 
             else:
@@ -506,7 +564,7 @@ class Engine:
                                             'company_id' : company_id,
                                             'news_id_list': news_id_list,
                                             'topic_date' : topic_date,
-                                            'start_date' : self.start_time,
+                                            'start_date' : self.topic_start_time,
                                             })
                     
         return topic_info
@@ -520,16 +578,44 @@ class Engine:
         return news_topic_lst
     
     
-    # [TODO] topic_title, topci_summary는 추후 수정 가능
-    def preprocess_topic_summary(self, merge_data):
-        topic_summary_info = [{'topic_id' : ts_data['topic_id'], 
-                                'topic_title_summary' : ts_data['title'],
-                                'topic_summary' : ts_data['summary_text']} for ts_data in merge_data]
+    # [TODO] topic_title, topic_summary는 추후 수정 가능
+    def preprocess_topic_summary(self, merge_data, pretrained_model_name_or_path="EbanLee/kobart-title"):
+        topic_summary_info = []
+        
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        tokenizer = PreTrainedTokenizerFast.from_pretrained(pretrained_model_name_or_path)
+        model = BartForConditionalGeneration.from_pretrained(pretrained_model_name_or_path)
+        model.to(device)
+        model.eval()
+        
+        for ts_data in tqdm(merge_data, desc='TOPIC_SUMMARY WORKING'):
+            input_text = ts_data['contents']
+            input_ids = tokenizer.encode(input_text, 
+                                         return_tensors="pt", 
+                                         padding=True, 
+                                         truncation=True, 
+                                         max_length=1026).to(device)
+            
+            # Generate Summary Text Ids
+            summary_text_ids = model.generate(input_ids=input_ids,
+                                              bos_token_id=model.config.bos_token_id,
+                                              eos_token_id=model.config.eos_token_id,
+                                              length_penalty=1.0,
+                                              max_length=40,
+                                              min_length=3,
+                                              num_beams=6,
+                                              repetition_penalty=1.5).to('cpu')
+        
+            topic_title_summary = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
+            
+            topic_summary_info.append({'topic_id' : ts_data['topic_id'], 
+                                    'topic_title_summary' : topic_title_summary,
+                                    'topic_summary' : ts_data['summary_text']})
+        # GPU 메모리 정리
+        torch.cuda.empty_cache()
         return topic_summary_info
 
-    
-    
-    # [TODO] topic url은 추후 crawling을 통해서 수집
+
     def preprocess_topic_image(self, topic_data):
         topic_image_info = [{'topic_id' : ti_data['topic_id'], 'image_url' : ti_data['img_url']} for ti_data in topic_data]
         return topic_image_info
@@ -567,18 +653,17 @@ class Engine:
         crwaler = NewsCrawler(client)
         
         await asyncio.gather(
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='주요뉴스', save_dir=f'./data/mainnews_url.csv'),
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='기업/종목분석', save_dir=f'./data/companynews_url.csv'),
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='공시/메모', save_dir=f'./data/disclosurenews_url.csv')
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='주요뉴스', save_dir=f'/data/ephemeral/home/data/mainnews_url.csv'),
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='기업/종목분석', save_dir=f'/data/ephemeral/home/data/companynews_url.csv'),
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='공시/메모', save_dir=f'/data/ephemeral/home/data/disclosurenews_url.csv'),
+                crwaler.dynamic_crawling_news_url(start_date=self.today, end_date=self.today, save_dir=f'/data/ephemeral/home/data/economynews_url.csv')
             )
-        crwaler.dynamic_crawling_news_url(start_date=self.today, end_date=self.today, save_dir=f'./data/economynews_url.csv')
-
 
         await asyncio.gather(
-                crwaler.crawling_news_contents(url_data_path=f'./data/mainnews_url.csv', merge_data_path=f'./data/mainnews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'./data/companynews_url.csv', merge_data_path=f'./data/companynews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'./data/disclosurenews_url.csv', merge_data_path=f'./data/disclosurenews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'./data/economynews_url.csv', merge_data_path=f'./data/economynews_all.csv')
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/mainnews_url.csv', merge_data_path=f'/data/ephemeral/home/data/mainnews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/companynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/companynews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/disclosurenews_url.csv', merge_data_path=f'/data/ephemeral/home/data/disclosurenews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/economynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/economynews_all.csv')
             )
     
     
@@ -596,26 +681,56 @@ class Engine:
         return relate_news
 
 
+    async def fill(self):
+        news_exist = await self.fill_news()
+        print(news_exist)
+        # 수집된 뉴스가 있다면 다음 프로세스 실행.
+        if news_exist:
+            self.fill_news_company()
+            self.fill_summary()
+            self.fill_sentiment()
+            self.fill_topic()
+            self.fill_news_topic()
+            self.fill_topic_image()
+            self.fill_topic_summary()
 
 
-if __name__ == "__main__":    
+
+if __name__ == "__main__":
+    """
+    TEST 1차 수집    NEWS RELATED TABLES  2024-03-16 00:00:00 ~ 2024-03-16 10:59:59
+                     TOPIC RELATED TABLES 2024-03-16 00:00:00 ~ 2024-03-16 23:59:59
+                     NEWS 해당 날짜만 업로드 (확인)
+                            
+        2차 업데이트 확인   TIME PERIOD : NEWS RELATED TABLES  2024-03-16 11:00:00 ~ 2024-03-16 18:59:59
+                           TOPIC RELATED TABLES 2024-03-16 00:00:00 ~ 2024-03-16 23:59:59
+                    NEWS 중복없이 업데이트 (확인)
+                    TOPIC 삭제 후 재 생성, 중복 없음 (확인)
+
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--period', type=int, default=24, help='time period for crawling news')
+    parser.add_argument('--day_diff', type=int, default=0, help='day diff from now')
+    args = parser.parse_args()
+    
     fix_seed()
     db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
-    engine = Engine(db_user=db_user, 
-                        db_password=db_password, 
-                        db_host=db_host, 
-                        topic_n=0, 
-                        db_database= db_database, 
-                        db_port=db_port, 
-                        period=24, 
-                        day_diff=134)
     
-    # -- asyncio.run(engine.fill_news())
-    # -- engine.fill_news_company()
-    engine.fill_summary()
-    engine.fill_sentiment()
-    engine.fill_topic()
-    engine.fill_news_topic()
-    engine.fill_topic_summary()
-    engine.fill_topic_image()
+    engine = Engine(db_user=db_user, 
+                                db_password = db_password, 
+                                db_host = db_host, 
+                                topic_n = 0, 
+                                db_database = db_database, 
+                                db_port = db_port, 
+                                period = args.period,
+                                day_diff = args.day_diff)
+    
+    
+    with open('/data/ephemeral/home/data/log/log.txt', 'a') as file:
+        file.write(f"""Automation Process Start {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                        TIME PERIOD : NEWS RELATED TABLES  {engine.news_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {engine.news_end_time.strftime('%Y-%m-%d %H:%M:%S')}
+                                      TOPIC RELATED TABLES {engine.topic_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {engine.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')}
+                        \n""")
+        
+    asyncio.run(engine.fill())
     

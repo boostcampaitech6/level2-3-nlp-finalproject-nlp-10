@@ -21,13 +21,9 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, parse_qs
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 import tenacity
-
 from preprocessing import Denoiser
-
-
+from playwright.async_api import async_playwright
 
 class RestClient:
     def __init__(self, loop) -> None:
@@ -51,7 +47,7 @@ class RestClient:
 
 
 class NewsCrawler:
-    def __init__(self, client, kospi47_path:str='./utils/company.csv', krx_list_path='./utils/krxlist.csv') -> None:
+    def __init__(self, client, kospi47_path:str='/data/ephemeral/home/data/utils/company.csv', krx_list_path='/data/ephemeral/home/data/utils/krxlist.csv') -> None:
         self.client = client
         self.denoiser = Denoiser()
         self.kospi47 = pd.read_csv(kospi47_path)['name'].tolist()
@@ -131,7 +127,7 @@ class NewsCrawler:
 
 
 
-    @tenacity.retry(wait=tenacity.wait_fixed(1), stop=tenacity.stop_after_attempt(5))
+    @tenacity.retry(wait=tenacity.wait_fixed(5), stop=tenacity.stop_after_attempt(5))
     async def crawling_mainnews(self, section, date, page, date_urls, crawling_info):
         "date와 page가 주어졌을 때 네이버 금융 주요뉴스 제목, url 크롤링하는 함수"
         new_page = False
@@ -144,7 +140,6 @@ class NewsCrawler:
             
             # ul tag에 뉴스 리스트 존재
             ul_tag = news_html.select_one("#contentarea_left > div.mainNewsList._replaceNewsLink > ul")
-            
             # 각 뉴스는 li tag안에 있음
             li_tags = ul_tag.find_all('li')
             
@@ -319,60 +314,67 @@ class NewsCrawler:
         logger.info(f"MAIN NEWS CRAWLING DATA SAVED!! DIR : {save_dir}")
 
 
-    def dynamic_crawling_news_url(self, start_date:str, end_date:str, save_dir:str='./data/crawling_url/stock_relate_news.csv') -> None:
+    async def dynamic_crawling_news_url(self, start_date:str, end_date:str, save_dir:str='./data/crawling_url/stock_relate_news.csv') -> None:
         """네이버 경제 뉴스 url 크롤러"""
         logger.info(f"ECONOMY NEWS CRAWLING START!!")
         
-        driver = webdriver.Chrome()
         crawling_info, total_cnt = [], 0
-        date_list = self.generate_date_list(start_date, end_date)
-        # (1) 일자별로 접근하고
-        for date in tqdm(date_list):
-            try:
-                driver.get(f"https://news.naver.com/breakingnews/section/101/261?date={date.replace('-', '')}")
-                
-                news_list_div = None
-                # (2) 각 일자에 '기사 더보기' 계속 클릭하고 모든 기사를 UI에 띄우기.
-                while True:
-                    try:
-                        before_news_list_div = news_list_div if news_list_div else None
-                        driver.find_element(By.XPATH, '//*[@id="newsct"]/div[2]/div/div[2]/a').click()
-                        news_list_div = driver.find_elements(By.XPATH, '//*[@id="newsct"]/div[2]/div/div[1]')
-
-                        time.sleep(0.3)
-                    except Exception as e:
-                        if "Message: element not interactable" in str(e):
-                            pass
-                        else: 
-                            logger.error(e)
-                        break
-
-                # (3) 모든 기사를 다 띄웠으면 각 기사에 접근하기.
-                try:
-                    news_group_list_div = news_list_div[0].find_elements(By.CSS_SELECTOR, 'div.section_article._TEMPLATE')
-                # 마지막에 페이지가 이상하게 넘어가는 경우가 있음.
-                except:
-                    news_group_list_div = before_news_list_div[0].find_elements(By.CSS_SELECTOR, 'div.section_article._TEMPLATE')
-                    logger.info(f"LAST PAGE ERROR : Replace to Before page, DATE : {date}")
-
-                for news_group in news_group_list_div:
-                    for news in news_group.find_elements(By.CSS_SELECTOR, 'div.sa_text'):
-                        title = news.text.split('\n')[0]
-
-                        a_tag = news.find_element(By.TAG_NAME, 'a')
-                        # # a 태그의 href 속성 가져오기
-                        url = a_tag.get_attribute('href')
-                        crawling_info.append({'title' : title, 'url' :url})
-            
-            except Exception as e:
-                logger.error(f'DATE : {date}, {e}')
         
-        logger.info(f"ECONOMY NEWS CRAWLING END!! - TOTAL URL : {total_cnt}")
+        # Initialize Playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            
+            date_list = self.generate_date_list(start_date, end_date)
+            # (1) 일자별로 접근하고
+            for date in tqdm(date_list):
+                try:
+                    await  page.goto(f"https://news.naver.com/breakingnews/section/101/261?date={date.replace('-', '')}")
+                    
+                    news_list_div = None
+                    # (2) 각 일자에 '기사 더보기' 계속 클릭하고 모든 기사를 UI에 띄우기.
+                    while True:
+                        try:
+                            before_news_list_div = news_list_div if news_list_div else None
+                            await page.click('//*[@id="newsct"]/div[2]/div/div[2]/a')
+                            news_list_div = await page.query_selector_all('//*[@id="newsct"]/div[2]/div/div[1]')
+                            
+                            await asyncio.sleep(0.3)
+                            
+                        except Exception as e:
+                            if "Message: element not interactable" in str(e):
+                                pass
+                            else: 
+                                logger.error(e)
+                            break
 
-        # save crawling data
-        self.save_crawling_data(crawling_info, save_dir)
-        logger.info(f"ECONOMY NEWS CRAWLING DATA SAVED!! DIR : {save_dir}")
+                    # (3) 모든 기사를 다 띄웠으면 각 기사에 접근하기.
+                    try:
+                        news_group_list_div = await news_list_div[0].query_selector_all('div.section_article._TEMPLATE')
+                    # 마지막에 페이지가 이상하게 넘어가는 경우가 있음.
+                    except:
+                        news_group_list_div = await before_news_list_div[0].query_selector_all('div.section_article._TEMPLATE')
+                        logger.info(f"LAST PAGE ERROR : Replace to Before page, DATE : {date}")
 
+                    # 각 div tag에서 필요한 정보 추출
+                    for news_group in news_group_list_div:
+                        for news in await news_group.query_selector_all('div.sa_text'):
+                            title = (await news.inner_text()).split('\n')[0]
+                            a_tag = await news.query_selector('a')
+                            url = await a_tag.get_attribute('href')
+                            crawling_info.append({'title' : title, 'url' :url})
+                
+                except Exception as e:
+                    logger.error(f'DATE : {date}, {e}')
+            
+            logger.info(f"ECONOMY NEWS CRAWLING END!! - TOTAL URL : {total_cnt}")
+
+            # save crawling data
+            self.save_crawling_data(crawling_info, save_dir)
+            logger.info(f"ECONOMY NEWS CRAWLING DATA SAVED!! DIR : {save_dir}")
+            
+            await browser.close()
+        
 
 
     async def crawling_news_contents(self, url_data_path:str, merge_data_path:str)->None:
@@ -397,6 +399,7 @@ class NewsCrawler:
                     crawling_info.append({'url' : url, 'relate_stock' : relate_stock, 'real_title' : title, 'contents' : contents, 'datetime' :date, 'img_url':img_url})
             except:
                 continue
+            
         if crawling_info:
             df_contents = pd.DataFrame(crawling_info)
             df_merge = pd.merge(left=df_url, right=df_contents, on='url').dropna()
@@ -410,28 +413,25 @@ async def main(startdate, enddate):
     loop = asyncio.get_event_loop()
     client = RestClient(loop)
     crwaler = NewsCrawler(client)
-
-    path_back = f'{startdate.replace("-", "")}_{enddate.replace("-", "")}.csv'
     await asyncio.gather(
-        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='주요뉴스', save_dir=f'./data/crawling_url/mainnews_{path_back}'),
-        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='기업/종목분석', save_dir=f'./data/crawling_url/companynews_{path_back}'),
-        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='공시/메모', save_dir=f'./data/crawling_url/disclosurenews_{path_back}')
+        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='주요뉴스', save_dir=f'./data/mainnews_url.csv'),
+        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='기업/종목분석', save_dir=f'./data/companynews_url.csv'),
+        crwaler.crawling_news_url(start_date=startdate, end_date=enddate, section='공시/메모', save_dir=f'./data/disclosurenews_url.csv'),
+        crwaler.dynamic_crawling_news_url(start_date=startdate, end_date=enddate, save_dir=f'./data/economynews_url.csv')
     )
 
-    crwaler.dynamic_crawling_news_url(start_date=startdate, end_date=enddate, save_dir=f'./data/crawling_url/economynews_{path_back}')
-
     await asyncio.gather(
-        crwaler.crawling_news_contents(url_data_path=f'./data/crawling_url/mainnews_{path_back}', merge_data_path=f'./data/crawling_all/mainnews_{path_back}'),
-        crwaler.crawling_news_contents(url_data_path=f'./data/crawling_url/companynews_{path_back}', merge_data_path=f'./data/crawling_all/companynews_{path_back}'),
-        crwaler.crawling_news_contents(url_data_path=f'./data/crawling_url/disclosurenews_{path_back}', merge_data_path=f'./data/crawling_all/disclosurenews_{path_back}'),
-        crwaler.crawling_news_contents(url_data_path=f'./data/crawling_url/economynews_{path_back}', merge_data_path=f'./data/crawling_all/economynews_{path_back}')
+        crwaler.crawling_news_contents(url_data_path=f'./data/mainnews_url.csv', merge_data_path=f'./data/mainnews_all.csv'),
+        crwaler.crawling_news_contents(url_data_path=f'./data/companynews_url.csv', merge_data_path=f'./data/companynews_all.csv'),
+        crwaler.crawling_news_contents(url_data_path=f'./data/disclosurenews_url.csv', merge_data_path=f'./data/disclosurenews_all.csv'),
+        crwaler.crawling_news_contents(url_data_path=f'./data/economynews_url.csv', merge_data_path=f'./data/economynews_all.csv')
 
     )
     
 
 if __name__ == "__main__":
-    startdate = '2024-02-13'
-    enddate = '2024-02-23'
+    startdate = '2024-02-01'
+    enddate = '2024-02-01'
 
 
     asyncio.run(main(startdate, enddate))
