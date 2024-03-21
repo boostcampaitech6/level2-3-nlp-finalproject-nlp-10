@@ -34,6 +34,13 @@ def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=3, min_samples=3
     
     return docs_df, cluster.labels_
 
+def dbscan_process(dataset, corpus_embeddings, eps=0.2, min_samples=2):
+    c_model = DBSCAN(eps=0.2, min_samples=min_samples, metric = "cosine")
+    result = c_model.fit_predict(corpus_embeddings)
+    dataset['Topic']=result
+    docs_df = dataset
+    return docs_df, result
+
 def check_numeric(input_str):
     try:
         num = int(input_str)
@@ -53,7 +60,7 @@ def check_cluster(docs_df):
         else : break
 
 def check_date_format(date_string):
-    pattern = r'^\d{4}-\d{2}-\d{2}$'
+    pattern = r'^\d{4}-\d{2}-\d{2}'
     if re.match(pattern, date_string):
         return True
     else:
@@ -94,10 +101,11 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
                                     )
             
         elif c_algo=='db' or 'DB':  #뉴스 적을 때
-            c_model = DBSCAN(eps=0.2, min_samples=2, metric = "cosine")
-            result = c_model.fit_predict(embeddings)
-            sub_dataset['Topic']=result
-            docs_df = sub_dataset
+            # c_model = DBSCAN(eps=0.2, min_samples=2, metric = "cosine")
+            # result = c_model.fit_predict(embeddings)
+            # sub_dataset['Topic']=result
+            # docs_df = sub_dataset
+            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.3, min_samples=2)
 
         elapsed_time = time.time() - start_time
         print(f'duration : {elapsed_time}s\n')
@@ -114,7 +122,9 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
             print(f"{k} : {cluster_embedding[k].shape}")
         
         c_emb_df = pd.DataFrame(cluster_embedding)  #클러스터 하나당 엠베딩을 따로 저장하려면
-        
+
+        """"""
+
         if args.make_file == 'True':
             docs_df.to_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
             c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
