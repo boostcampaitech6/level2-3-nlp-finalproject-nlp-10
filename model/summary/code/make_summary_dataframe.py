@@ -3,14 +3,19 @@ from tqdm import tqdm, trange
 import pandas as pd
 import torch
 from torch.utils.data import TensorDataset, DataLoader
+from preprocess import pre_processing
 
 def make_summary_data(model, tokenizer, dataset_path, device):
     file_list = os.listdir(dataset_path)
     name_end = 'RY.csv'
     model.to(device)
     batch_size = 64
-    min_length = 30
-    max_length = 203
+    length_penalty=1.0
+    max_length=300
+    min_length=30
+    num_beams=6
+    repetition_penalty=1.5
+    no_repeat_ngram_size = 15
     model.eval()
 
     for file in file_list:
@@ -32,7 +37,7 @@ def make_summary_data(model, tokenizer, dataset_path, device):
             text_len = len(tokenizer.tokenize(text))
             
             if text_len<min_length+40:
-                text = total_data['title'].iloc[idx] + '.' + text
+                text = total_data['title'].iloc[idx] + '. ' + text
 
             tokens = tokenizer.encode(text, padding="max_length", truncation=True, max_length=1024)
             input_ids.append(tokens)
@@ -51,12 +56,12 @@ def make_summary_data(model, tokenizer, dataset_path, device):
                                         input_ids=batch[0].to(device),
                                         bos_token_id=model.config.bos_token_id,
                                         eos_token_id=model.config.eos_token_id,
-                                        length_penalty=2.1,
+                                        length_penalty=length_penalty,
                                         max_length=max_length,
                                         min_length=min_length,
-                                        num_beams=6,
-                                        repetition_penalty=1.8,
-                                        no_repeat_ngram_size = 15,
+                                        num_beams=num_beams,
+                                        repetition_penalty=repetition_penalty,
+                                        no_repeat_ngram_size = no_repeat_ngram_size,
                                         ).to('cpu')
 
 
@@ -66,11 +71,11 @@ def make_summary_data(model, tokenizer, dataset_path, device):
                 s_list.append(output)
         
         for idx in no_text_ids:
-            s_list[idx] = total_data['title'].iloc[idx]
+            s_list[idx] = pre_processing(total_data['title'].iloc[idx])
 
         df_sum = pd.DataFrame({'summary' : s_list})
 
         total_data = pd.concat([total_data, df_sum], axis=1)
-        total_data.to_csv(os.path.join("../../embedding/dataset", f'5Sumv1_{file}'), index=False)
+        total_data.to_csv(os.path.join("../../embedding/dataset", f'Sumv3_{file}'), index=False)
         print('\nAdd summary data finish!\n')
             
