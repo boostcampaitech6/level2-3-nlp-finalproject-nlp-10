@@ -7,42 +7,51 @@ import random
 from argparse import ArgumentParser
 from tqdm import tqdm, trange
 import json
-from data_load import load_dataset, pd_load_dataset
+from data_load import load_dataset, pd_load_dataset, load_report_dataset
 from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
 from make_dataset import make_dataset
-import torch.nn as nn
-import torch.optim as optim
 from rouge import Rouge
 
 dataset_path = "../dataset"
-#data_type_path = os.path.join(dataset_path, "book_sum")    #폴더 안에 하나의 문서당 하나의 json파일 있는 형태
-data_type_path = os.path.join(dataset_path, "doc_sum")      #하나의 hson파일 안에 모든 문서 데이터들 있는 형태
-train_dataset_path = os.path.join(data_type_path, "Training")
-valid_dataset_path = os.path.join(data_type_path, "Validation")
+book_data_path = os.path.join(dataset_path, "book_sum")    #폴더 안에 하나의 문서당 하나의 json파일 있는 형태
+doc_data_path = os.path.join(dataset_path, "doc_sum")      #하나의 hson파일 안에 모든 문서 데이터들 있는 형태
+report_data_path = os.path.join(dataset_path, "report_sum")
+custom_data_path = os.path.join(dataset_path, "custom_data")
+book_train_dataset_path = os.path.join(book_data_path, "Training")
+doc_train_dataset_path = os.path.join(doc_data_path, "Training")
+report_train_dataset_path = os.path.join(report_data_path, "Training")
+book_valid_dataset_path = os.path.join(book_data_path, "Validation")
+doc_valid_dataset_path = os.path.join(doc_data_path, "Validation")
+report_valid_dataset_path = os.path.join(report_data_path, "Validation")
 
-def training(args, model_name, device):
-    if data_type_path==os.path.join(dataset_path, "book_sum"):
-        train_data1 = load_dataset(os.path.join(train_dataset_path, "training_dataset1"))
-        train_data2 = load_dataset(os.path.join(train_dataset_path, "training_dataset2"))
-        train_data3 = load_dataset(os.path.join(train_dataset_path, "training_dataset3"))
-        train_data4 = load_dataset(os.path.join(train_dataset_path, "training_dataset4"))
-        train_data = pd.concat([train_data1, train_data2, train_data3, train_data4], ignore_index=True)
+load_book_data = True
+load_doc_data = True
+load_report_data = True
+
+def training(args, model, tokenizer, device):
+    train_data = pd.DataFrame(columns = ['passage', 'summary'])
+
+    if load_book_data==True:
+        train_data1 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset1"))
+        train_data2 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset2"))
+        train_data3 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset3"))
+        train_data4 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset4"))
+        train_data = pd.concat([train_data, train_data1, train_data2, train_data3, train_data4], ignore_index=True)
+        print(f"book_data_length = {len(train_data1) + len(train_data2) + len(train_data3) + len(train_data4)}")
     
-    if data_type_path==os.path.join(dataset_path, "doc_sum"):
-        train_data1 = pd_load_dataset(os.path.join(train_dataset_path, "edit_training_dataset.json"))
-        train_data2 = pd_load_dataset(os.path.join(train_dataset_path, "law_training_dataset.json"))
-        train_data3 = pd_load_dataset(os.path.join(train_dataset_path, "paper_training_dataset.json"))
-        train_data = pd.concat([train_data1, train_data2, train_data3], ignore_index=True)
+    if load_doc_data==True:
+        train_data1 = pd_load_dataset(os.path.join(doc_train_dataset_path, "edit_training_dataset.json"))
+        train_data2 = pd_load_dataset(os.path.join(doc_train_dataset_path, "law_training_dataset.json"))
+        train_data3 = pd_load_dataset(os.path.join(doc_train_dataset_path, "paper_training_dataset.json"))
+        train_data = pd.concat([train_data, train_data1, train_data2, train_data3], ignore_index=True)
+        print(f"doc_data_length = {len(train_data1) + len(train_data2) + len(train_data3)}")
+    
+    if load_report_data == True:        
+        train_data1 = load_report_dataset(report_valid_dataset_path)
+        train_data = pd.concat([train_data, train_data1], ignore_index=True)
+        print(f"report_data_length = {len(train_data1)}")
 
-        print(f"{train_data1['passage'].shape=}, {train_data1['summary'].shape=}")
-        print(f"{train_data2['passage'].shape=}, {train_data2['summary'].shape=}")
-        print(f"{train_data3['passage'].shape=}, {train_data3['summary'].shape=}")
-        print(f"{train_data['passage'].shape=}, {train_data['summary'].shape=}")
-        print()
-
-    model_config = AutoConfig.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = BartForConditionalGeneration.from_pretrained(model_name, config = model_config)
+    print(f"{len(train_data)=}")
 
     print(f'{train_data.columns=}')
     train_data = make_dataset(tokenizer, train_data['passage'], train_data['summary'])  #(input_ids, attention_mask, token_type_ids, overflow_to_sample_mapping)
@@ -57,7 +66,6 @@ def training(args, model_name, device):
     train_sampler = RandomSampler(train_data)
     train_loader = DataLoader(train_data, sampler=train_sampler, batch_size = args.per_device_train_batch_size)
 
-    loss_fn = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
     optimizer = AdamW(model.parameters(), lr = args.learning_rate, eps=args.adam_epsilon)
 
     model.to(device)
@@ -80,10 +88,6 @@ def training(args, model_name, device):
             context_input = {'input_ids':batch[0], 'attention_mask': batch[1], 'token_type_ids': batch[2]}
             target_input = {'input_ids':batch[3], 'attention_mask': batch[4], 'token_type_ids': batch[5]}
 
-            # output = model(input_ids = context_input['input_ids'], attention_mask = context_input['attention_mask'],
-            #                decoder_input_ids = target_input['input_ids']).logits
-            # loss = loss_fn(output[:, :-1, :].reshape(-1, output.size(-1)), target_input['input_ids'][:,1:].reshape(-1))
-            #위의 코드는 수정해야 사용할 수 있음
             loss = model(input_ids = context_input['input_ids'], attention_mask = context_input['attention_mask'],
                            labels = target_input['input_ids']).loss
         
@@ -91,41 +95,29 @@ def training(args, model_name, device):
             optimizer.step()
             model.zero_grad()
         
-            if global_step%500==0:
-                print(f'{global_step=} training{loss=}')
+            if global_step%1000==0:
+                print(f' {global_step=}, Loss={loss.item():.7f}')
 
             global_step+=1
+
+        model.save_pretrained('../trained_model')
+        tokenizer.save_pretrained('../save_tokenizer')
 
     print(f'\n!!!!!!!!!!!!!Train Finish!!!!!!!!!!!!!!!!\n')
 
     return model
 
 def validation(model, model_name, device):
-    # if data_type_path==os.path.join(dataset_path, "book_sum"):
-    #     valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
-    #     valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
-    #     valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
-    #     valid_data4 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
-    #     valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
-
-    # if data_type_path==os.path.join(dataset_path, "doc_sum"):
-    #     valid_data1 = pd_load_dataset(os.path.join(valid_dataset_path, "edit_valid_dataset.json"))
-    #     valid_data2 = pd_load_dataset(os.path.join(valid_dataset_path, "law_valid_dataset.json"))
-    #     valid_data3 = pd_load_dataset(os.path.join(valid_dataset_path, "paper_valid_dataset.json"))
-    #     valid_data = pd.concat([valid_data1, valid_data2, valid_data3], ignore_index=True)
-
     ''' valid data들 다 합치기 '''
-    valid_dataset_path = os.path.join(dataset_path, "book_sum/Validation")
-    valid_data1 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset1"))
-    valid_data2 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset2"))
-    valid_data3 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset3"))
-    valid_data4 = load_dataset(os.path.join(valid_dataset_path, "valid_dataset4"))
+    valid_data1 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset1"))
+    valid_data2 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset2"))
+    valid_data3 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset3"))
+    valid_data4 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset4"))
     valid_data = pd.concat([valid_data1, valid_data2, valid_data3, valid_data4], ignore_index=True)
 
-    # valid_dataset_path = os.path.join(dataset_path, "doc_sum/Validation")
-    # valid_data1 = pd_load_dataset(os.path.join(valid_dataset_path, "edit_valid_dataset.json"))
-    # valid_data2 = pd_load_dataset(os.path.join(valid_dataset_path, "law_valid_dataset.json"))
-    # valid_data3 = pd_load_dataset(os.path.join(valid_dataset_path, "paper_valid_dataset.json"))
+    # valid_data1 = pd_load_dataset(os.path.join(doc_valid_dataset_path, "edit_valid_dataset.json"))
+    # valid_data2 = pd_load_dataset(os.path.join(doc_valid_dataset_path, "law_valid_dataset.json"))
+    # valid_data3 = pd_load_dataset(os.path.join(doc_valid_dataset_path, "paper_valid_dataset.json"))
     # valid_data = pd.concat([valid_data, valid_data1, valid_data2, valid_data3], ignore_index=True)
     
     rouge = Rouge()
@@ -145,9 +137,10 @@ def validation(model, model_name, device):
                                     bos_token_id=tokenizer.bos_token_id,
                                     eos_token_id=tokenizer.eos_token_id,
                                     length_penalty=2.0,
-                                    max_length=300,
-                                    min_length=50,
+                                    max_length=220,
+                                    min_length=30,
                                     num_beams=6,
+                                    repetition_penalty=1.7,
                                     ).to("cpu")
             
             output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)

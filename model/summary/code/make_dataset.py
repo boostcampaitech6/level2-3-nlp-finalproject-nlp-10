@@ -19,14 +19,14 @@ def make_dataset(tokenizer, input_data, target_data):
                             truncation=True,
                             # stride = doc_stride,
                             # return_overflowing_tokens=True,
-                            #return_token_type_ids=False,
+                            return_token_type_ids=True,
                             )
         
         i_input_ids.append(input_token['input_ids'])    #return_overflowing_tokens이 True면 차원이 하나 더 붙어서 나온다. 따라서 extend로 바꿔야함
         i_attention_mask.append(input_token['attention_mask'])
         i_token_type_ids.append(input_token['token_type_ids'])
         #i_overflow_mapping.extend(input_token['overflow_to_sample_mapping'])
-    
+      
     for data in tqdm(target_data.to_list(), desc=f"target data toknizing "):
         target_token = tokenizer(
                             data, 
@@ -36,7 +36,7 @@ def make_dataset(tokenizer, input_data, target_data):
                             truncation=True,
                             #stride = doc_stride,
                             #return_overflowing_tokens=True,
-                            #return_token_type_ids=False,
+                            return_token_type_ids=True,
                             )
         
         t_input_ids.append(target_token['input_ids'])
