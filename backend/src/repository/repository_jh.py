@@ -68,6 +68,15 @@ class Repository_jh:
         
         return [row[0] for row in result]
     
+    #뉴스 아이디로 뉴스 내용 가져오기 + 날짜 내림차순으로 정렬    
+    def get_news_by_news_id_ordered_desc_by_date(self, news_id):
+
+        result = self.session.query(News.title).\
+            filter(News.news_id.in_(news_id)).\
+            order_by(News.date.desc()).all()
+        
+        return [row[0] for row in result]
+    
     #뉴스 토픽 기준 첫 번째 뉴스의 이미지 1개 url 골라오기
     def get_topic_image_url_by_date_and_company(self, topic_id):
         topic_image = self.session.query(Topic_image).\

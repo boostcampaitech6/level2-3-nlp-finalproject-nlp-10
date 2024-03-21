@@ -81,6 +81,50 @@ def get_topic_titles_handler(
         
     return result
 
+# 뉴스 요약 정보 불러오기 코드
+@router.get("/get-titles-desc")
+def get_news_by_news_id_ordered_desc_by_date(
+    # request: Topic_titles_request,
+    start_date: date,
+    end_date: date,
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # start_date = request.start_date
+    # end_date = request.end_date
+    # company_id = request.company_id
+    
+    # 요약 정보 불러오기
+    topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company(start_date, end_date, company_id)
+    
+    # 토픽 당 뉴스 개수 세기
+    news: List[News_topic] = repo.get_news_cnt_by_date_and_company(start_date, end_date, company_id)
+    cnt = count_topic_occurrences(news)
+    
+    # 토픽 당 대표 뉴스 가져오기
+    news = repo.get_news_by_date_and_company(start_date, end_date, company_id)  
+    news = make_set(news)    
+    news = repo.get_news_by_news_id_ordered_desc_by_date(news) 
+    
+    # 뉴스에서 가장 많이 등장한 sentiment_value 가져오기
+    sentiments = repo.get_news_sentiment_by_date_and_company(start_date, end_date, company_id)
+    sentiment = count_sentiment_occurrences(sentiments)
+    
+    # topic, topic_title_summary, topic_summary, cnt를 response
+    result = []
+    for topic, num, new in zip(topics, cnt, news):
+        new_dict = {
+            "topic_id": topic.topic_id,
+            "topic_title_summary": topic.topic_title_summary,
+            "topic_summary": topic.topic_summary,
+            "cnt":  num,
+            "title": new,
+            "sentiment": sentiment[0]
+        }
+        result.append(new_dict)    
+        
+    return result
+
 
 # 테스트 코드
 # 뉴스 요약 정보 불러오기 코드
