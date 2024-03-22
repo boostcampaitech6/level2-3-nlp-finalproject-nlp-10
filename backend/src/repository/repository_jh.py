@@ -3,7 +3,7 @@ from sqlalchemy import select, and_, func
 from schema.response import TopicImageURLResponse
 from fastapi import Depends
 from database.connection import get_db
-from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic, Topic_image
+from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic, Topic_image, Summary
 from typing import List 
 
 class Repository_jh:
@@ -11,12 +11,67 @@ class Repository_jh:
         self.session = session
         
     # 날짜와 기업으로 토픽에 맞는 topic_summary 불러오기     
+    def get_topics_summary_by_company(self, company_id) -> List[Topic_summary]:
+        return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
+                Topic.company_id == company_id
+            )).all()    
+        
+    def get_news_cnt_by_company(self, company_id) -> List[News_topic]:
+        return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.topic_id).filter(and_(
+                Topic.company_id == company_id
+            )).all()    
+        
+    # 날짜와 기업으로 토픽의 뉴스들을 불러오기    
+    def get_news_by_company_id(self, company_id):
+
+        return self.session.query(News_topic).\
+            join(Topic, News_topic.topic_id == Topic.topic_id).\
+            filter(
+                Topic.company_id == company_id,
+            ).all()    
+        
+    #뉴스 아이디로 뉴스 내용 가져오기 + 날짜 내림차순으로 정렬    
+    def get_news_ordered_desc_by_date(self, news_id):
+
+        result = self.session.query(News.title).\
+            filter(News.news_id.in_(news_id)).\
+            order_by(News.date.desc()).all()
+        
+        return [row[0] for row in result]    
+    
+    # 기업으로 토픽의 뉴스들 sentiment들을 불러오기    
+    def get_news_sentiment_by_company(self, company_id) -> List[any]:
+        # return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.id).filter(and_(
+        #         Topic.topic_date >= start_date,
+        #         Topic.topic_date <= end_date,
+        #         Topic.company_id == company_id
+        #     )).all()
+    
+        news_topic_alias = aliased(News_topic)
+        news_alias = aliased(News)
+
+        return self.session.query(Sentiment).\
+            join(news_alias, Sentiment.news_id == news_alias.news_id).\
+            join(news_topic_alias, news_alias.news_id == news_topic_alias.news_id).\
+            join(Topic, news_topic_alias.topic_id == Topic.topic_id).\
+            filter(
+                Topic.company_id == company_id
+            ).all()
+        
+    ################################33    
+    # 날짜와 기업으로 토픽에 맞는 topic_summary 불러오기     
     def get_topics_summary_by_date_and_company(self, start_date, end_date, company_id) -> List[Topic_summary]:
         return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
                 Topic.topic_date >= start_date,
                 Topic.topic_date <= end_date,
                 Topic.company_id == company_id
             )).all()
+        
+    # 날짜와 기업으로 토픽에 맞는 topic_summary 불러오기     
+    def get_news_by_company(self, company_id) -> List[Topic_summary]:
+        return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
+                Topic.company_id == company_id
+            )).all()    
         
     # 날짜와 기업으로 토픽에 맞는 뉴스 불러오기    
     def get_news_cnt_by_date_and_company(self, start_date, end_date, company_id) -> List[News_topic]:
@@ -46,6 +101,52 @@ class Repository_jh:
                 Topic.topic_date <= end_date,
                 Topic.company_id == company_id
             )).all()
+            
+        # 날짜와 기업으로 토픽에 맞는 뉴스 불러오기    
+    def get_news_cnt_by_date_and_company(self, start_date, end_date, company_id) -> List[News_topic]:
+        return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.topic_id).filter(and_(
+                Topic.topic_date >= start_date,
+                Topic.topic_date <= end_date,
+                Topic.company_id == company_id
+            )).all()
+        
+    # 기업으로 뉴스들 요약 불러오기    
+    def get_news_summary_by_company(self, company_id) -> List[any]:
+        # return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.id).filter(and_(
+        #         Topic.topic_date >= start_date,
+        #         Topic.topic_date <= end_date,
+        #         Topic.company_id == company_id
+        #     )).all()
+    
+        news_topic_alias = aliased(News_topic)
+        news_alias = aliased(News)
+
+        return self.session.query(Summary).\
+            join(news_alias, Summary.news_id == news_alias.news_id).\
+            join(news_topic_alias, news_alias.news_id == news_topic_alias.news_id).\
+            join(Topic, news_topic_alias.topic_id == Topic.topic_id).\
+            filter(
+                Topic.company_id == company_id
+            ).all()   
+            
+    # 기업으로 뉴스들 sentiment들을 불러오기    
+    def get_news_sentiment_by_company(self, company_id) -> List[any]:
+        # return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.id).filter(and_(
+        #         Topic.topic_date >= start_date,
+        #         Topic.topic_date <= end_date,
+        #         Topic.company_id == company_id
+        #     )).all()
+    
+        news_topic_alias = aliased(News_topic)
+        news_alias = aliased(News)
+
+        return self.session.query(Sentiment).\
+            join(news_alias, Sentiment.news_id == news_alias.news_id).\
+            join(news_topic_alias, news_alias.news_id == news_topic_alias.news_id).\
+            join(Topic, news_topic_alias.topic_id == Topic.topic_id).\
+            filter(
+                Topic.company_id == company_id
+            ).all()         
                   
             
     # 날짜와 기업으로 토픽의 뉴스들을 불러오기    
