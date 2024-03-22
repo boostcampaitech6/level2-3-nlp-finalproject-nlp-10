@@ -15,7 +15,7 @@ c_emb_path = os.path.join(dataset_path, 'cluster_embedding')
 file_name = "add_embedding_Sum_FIN_NEWS_SUMMARY.csv"
 
 parser = argparse.ArgumentParser(description="")
-parser.add_argument("--make_cluster", default='False', type=str, help='False = read')   #클러스터링을 할지 원래있던 클러스터링데이터를 읽을지
+parser.add_argument("--make_cluster", default='True', type=str, help='False = read')   #클러스터링을 할지 원래있던 클러스터링데이터를 읽을지
 parser.add_argument("--make_file", default='False', type=str, help='make topic?')   #토픽 추가한 데이터를 만들지
 args = parser.parse_args()
 
@@ -77,21 +77,23 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
             sub_dataset = dataset[pd.to_datetime(dataset['datetime']).dt.date == pd.to_datetime(selected_date).date()]
             sub_dataset = sub_dataset[sub_dataset['relate_stock'].apply(lambda x: '삼성전자' in x)]#############
 
-        elif selected_date=='All':
+        elif selected_date=='All' or 'ALL' or 'all':
             sub_dataset = dataset
 
         else :break
 
         embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), sub_dataset['embedding'].tolist()))
         sub_dataset['embedding'] = embeddings
-        start_time = time.time()
 
         while(True):
-            c_algo = input('(\'hdb\' : HDBSCAN, \'db\' : DBSCAN) :')
+            c_algo = input('클러스터링 알고리즘 선택(\'hdb\' : HDBSCAN, \'db\' : DBSCAN) :')
             if c_algo == 'hdb' or 'HDB' or 'db' or 'DB':
                 break
             else: print(f'다시 입력해주세요.')
+        
+        print(f"{c_algo} start!")
 
+        start_time = time.time()
         if c_algo=='hdb' or 'HDB':   #뉴스 많을 때
             docs_df, result = hdbscan_process(sub_dataset, 
                                     embeddings,
@@ -110,24 +112,27 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
         elapsed_time = time.time() - start_time
         print(f'duration : {elapsed_time}s\n')
 
-        """클러스터들 평균 엠베딩 만들기(-1 제외)"""
-        cluster_embedding = defaultdict(list)
-        for idx in range(len(docs_df)):
-            curr_cluster = docs_df['Topic'][idx]
-            if curr_cluster != -1:
-                cluster_embedding[curr_cluster].append(docs_df['embedding'][idx])
-            
-        for k in sorted(cluster_embedding.keys()):
-            cluster_embedding[k] = np.mean(cluster_embedding[k], axis=0)
-            print(f"{k} : {cluster_embedding[k].shape}")
-        
-        c_emb_df = pd.DataFrame(cluster_embedding)  #클러스터 하나당 엠베딩을 따로 저장하려면
+        docs_df = docs_df.reset_index(drop=True)
+        print(docs_df.head())
 
-        """"""
+        # """클러스터들 평균 엠베딩 만들기(-1 제외)"""
+        # cluster_embedding = defaultdict(list)
+        # for idx in range(len(docs_df)):
+        #     curr_cluster = docs_df['Topic'][idx]
+        #     if curr_cluster != -1:
+        #         cluster_embedding[curr_cluster].append(docs_df['embedding'][idx])
+            
+        # for k in sorted(cluster_embedding.keys()):
+        #     cluster_embedding[k] = np.mean(cluster_embedding[k], axis=0)
+        #     print(f"{k} : {cluster_embedding[k].shape}")
+        
+        # c_emb_df = pd.DataFrame(cluster_embedding)  #클러스터 하나당 엠베딩을 따로 저장하려면
+
+        # """"""
 
         if args.make_file == 'True':
             docs_df.to_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
-            c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
+            # c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
 
         times = docs_df['datetime'].unique()
 
@@ -140,7 +145,7 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
             save_q = input(f"방금의 토픽들이 추가된 .csv를 만드시겠습니까?(만드려면 yes입력) : ")
             if save_q == 'yes':
                 docs_df.to_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
-                c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
+                # c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
 
 
 else:   #토픽숫자 달려있는 파일 불러와서 확인할 때
