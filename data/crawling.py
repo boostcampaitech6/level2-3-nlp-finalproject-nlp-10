@@ -129,7 +129,7 @@ class NewsCrawler:
 
     @tenacity.retry(wait=tenacity.wait_fixed(5), stop=tenacity.stop_after_attempt(5))
     async def crawling_mainnews(self, section, date, page, date_urls, crawling_info):
-        "date와 page가 주어졌을 때 네이버 금융 주요뉴스 제목, url 크롤링하는 함수"
+        """date와 page가 주어졌을 때 네이버 금융 주요뉴스 제목, url 크롤링하는 함수"""
         new_page = False
         try:
             # 주요 뉴스 목차 URL 생성
@@ -183,7 +183,7 @@ class NewsCrawler:
 
     @tenacity.retry(wait=tenacity.wait_fixed(1), stop=tenacity.stop_after_attempt(5))
     async def crawling_financenews(self, section, date, page, date_urls, crawling_info):
-        "date와 page가 주어졌을 때 네이버 금융 기업/종목분석, 공시/메모 뉴스 제목, url 크롤링하는 함수"
+        """date와 page가 주어졌을 때 네이버 금융 기업/종목분석, 공시/메모 뉴스 제목, url 크롤링하는 함수"""
         try:
             # url에 들어가는 날짜형식에 맞게 변환
             date, date_save_format = date.replace('-', ''), date
@@ -281,13 +281,13 @@ class NewsCrawler:
 
 
 
-    async def crawling_news_url(self, start_date:str, end_date:str, section:str='기업/종목분석', save_dir:str='./data/crawling_url/companynews.csv')->None:
+    async def crawling_news_url(self, start_date:str, end_date:str, section:str, save_dir:str)->None:
         """기업/종목분석, 공시/메모 뉴스 url 크롤러"""
-        logger.info(f"{section} NEWS CRAwLING START!!")
+        logger.info(f"{section} NEWS CRAWLING START!!")
 
         crawling_info, total_cnt = [], 0
         date_list = self.generate_date_list(start_date, end_date)
-
+        
         for date in tqdm(date_list) :
             date_urls, page = set(), 1
             
@@ -306,7 +306,6 @@ class NewsCrawler:
                     total_cnt += len(date_urls)
                     break
 
-
         logger.info(f"MAIN NEWS CRAwLING END!! - TOTAL URL : {total_cnt}")
 
         # save crawling data
@@ -314,7 +313,7 @@ class NewsCrawler:
         logger.info(f"MAIN NEWS CRAWLING DATA SAVED!! DIR : {save_dir}")
 
 
-    async def dynamic_crawling_news_url(self, start_date:str, end_date:str, save_dir:str='./data/crawling_url/stock_relate_news.csv') -> None:
+    async def dynamic_crawling_news_url(self, start_date:str, end_date:str, save_dir:str) -> None:
         """네이버 경제 뉴스 url 크롤러"""
         logger.info(f"ECONOMY NEWS CRAWLING START!!")
         
