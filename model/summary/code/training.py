@@ -1,14 +1,10 @@
-from transformers import AutoTokenizer, BartForConditionalGeneration, AutoConfig, Trainer, TrainingArguments, AutoFeatureExtractor, set_seed, AdamW
+from transformers import AutoTokenizer, AdamW
 import torch
 import pandas as pd
-import numpy as np
 import os
-import random
-from argparse import ArgumentParser
 from tqdm import tqdm, trange
-import json
 from data_load import load_dataset, pd_load_dataset, load_report_dataset
-from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler
 from make_dataset import make_dataset
 from rouge import Rouge
 

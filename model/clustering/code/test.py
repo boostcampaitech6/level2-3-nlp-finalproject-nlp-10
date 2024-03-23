@@ -1,12 +1,9 @@
 #클러스터끼리의 코사인 시밀러리티 확인
 import pandas as pd
-import numpy as np
 import os
 from sklearn.cluster import DBSCAN
 import hdbscan
-from collections import Counter, defaultdict
-import time
-import argparse
+from collections import Counter
 import re
 from datetime import datetime, timedelta
 from sklearn.metrics.pairwise import cosine_similarity
@@ -62,21 +59,21 @@ def check_date_format(date_string):
     else:
         return False
     
-def cluster_mean_embedding(docs_df):
-    """클러스터들 평균 엠베딩 만들기(-1 제외)"""
-    cluster_embedding = defaultdict(list)
-    for idx in range(len(docs_df)):
-        curr_cluster = docs_df['Topic'][idx]
-        if curr_cluster != -1:
-            cluster_embedding[curr_cluster].append(docs_df['embedding'][idx])
+# def cluster_mean_embedding(docs_df):
+#     """클러스터들 평균 엠베딩 만들기(-1 제외)"""
+#     cluster_embedding = defaultdict(list)
+#     for idx in range(len(docs_df)):
+#         curr_cluster = docs_df['Topic'][idx]
+#         if curr_cluster != -1:
+#             cluster_embedding[curr_cluster].append(docs_df['embedding'][idx])
         
-    for k in sorted(cluster_embedding.keys()):
-        cluster_embedding[k] = np.mean(cluster_embedding[k], axis=0)
-        print(f"{k} : {cluster_embedding[k].shape}")
+#     for k in sorted(cluster_embedding.keys()):
+#         cluster_embedding[k] = np.mean(cluster_embedding[k], axis=0)
+#         print(f"{k} : {cluster_embedding[k].shape}")
 
-    c_emb_df = pd.DataFrame(cluster_embedding)  #클러스터 하나당 엠베딩을 따로 저장하려면
-    return c_emb_df
-    """"""
+#     c_emb_df = pd.DataFrame(cluster_embedding)  #클러스터 하나당 엠베딩을 따로 저장하려면
+#     return c_emb_df
+#     """"""
 
 data_df = pd.read_csv(file_path)
 prev_time = "2024-1-8 00:00:00"
@@ -102,8 +99,8 @@ prev_df, prev_result = hdbscan_process(
                             )
 curr_df, curr_result= dbscan_process(curr_df, curr_df['embedding'], eps=0.3, min_samples=2)
 
-prev_cluster_emb_df = cluster_mean_embedding(prev_df)  #기존 데이터들의 클러스터들(0~)에 대해 평균 임베딩 생성
-curr_cluster_emb_df = cluster_mean_embedding(curr_df)  #새로운 데이터들의 클러스터들(0~)에 대해 평균 임베딩 생성
+# prev_cluster_emb_df = cluster_mean_embedding(prev_df)  #기존 데이터들의 클러스터들(0~)에 대해 평균 임베딩 생성
+# curr_cluster_emb_df = cluster_mean_embedding(curr_df)  #새로운 데이터들의 클러스터들(0~)에 대해 평균 임베딩 생성
 
 
 

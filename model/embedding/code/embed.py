@@ -1,5 +1,4 @@
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer
 import pandas as pd
 import os
 import time
