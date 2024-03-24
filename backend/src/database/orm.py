@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey, Date, Text 
+from sqlalchemy import Column, Integer, VARCHAR, DateTime, ForeignKey, Date, Text, Float, BIGINT 
 from datetime import datetime 
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -151,5 +151,35 @@ class Topic_image(Base):
     # one to one
     topic = relationship("Topic", back_populates="topic_image")
     
+    
+    
+class Company_price_info(Base):
+    __tablename__ = "COMPANY_PRICE_INFO"
+    
+    # columns
+    company_price_info_id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(Integer, nullable=False)
+    name = Column(VARCHAR(100), nullable=False)
+    company_code = Column(VARCHAR(100), nullable=False)
+    date = Column(Date, nullable=False)
+    시가 = Column(Integer, nullable=False)
+    고가 = Column(Integer, nullable=False)
+    저가 = Column(Integer, nullable=False)
+    종가 = Column(Integer, nullable=False)
+    거래량 = Column(Integer, nullable=False)
+    등락률 = Column(Float, nullable=False)
+    시가총액 = Column(BIGINT, nullable=False)
+    거래대금 = Column(BIGINT, nullable=False)
+    BPS = Column(Float, nullable=False)
+    PBR = Column(Float, nullable=False)
+    EPS = Column(Float, nullable=False)
+    PER = Column(Float, nullable=False)
+    DIV = Column(Float, nullable=False)
+    DPS = Column(Float, nullable=False)
+    상장주식수 = Column(BIGINT, nullable=False)
+    외국인보유수량 = Column(BIGINT, nullable=False)
+    외국인지분율 = Column(Float, nullable=False)
+    외국인한도수량 = Column(BIGINT, nullable=False)
+    외국인한도소진률 = Column(Float, nullable=False)
     
     
