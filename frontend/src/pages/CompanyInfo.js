@@ -7,6 +7,8 @@ import { RxDoubleArrowDown, RxDoubleArrowUp } from "react-icons/rx";
 import axios from "axios";
 
 import CompanyRecentNews from "../components/CompanyRecentNews";
+import StockInfo from "../components/StockInfo";
+import SentimentInfo from "../components/SentimentInfo";
 
 function CompanyInfo({ startDate, endDate, company, confirm }) {
   const [cnt, setCnt] = useState([]);
@@ -15,6 +17,7 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
   const [sentiment, setSentiment] = useState([]);
+  const [companyId, setCompanyId] = useState(48);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -47,6 +50,7 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
       }
     };
     fetchGetNews();
+    setCompanyId(company)
   }, [confirm]);
 
   const [isBottom, setIsBottom] = useState(false);
@@ -95,9 +99,19 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
           item
           sx={{
             width: { sm: "100%", md: "50%" },
-            p: 4,
+            display: "flex",
+            flexDirection: "column",
           }}
-        ></Grid>
+        >
+          <Grid height={"35vh"} >
+            <StockInfo />
+          </Grid>
+          <Grid height={"35vh"} >
+            <SentimentInfo
+              companyId={companyId}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </>
   );

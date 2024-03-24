@@ -6,8 +6,8 @@ import { IoLogoDesignernews } from "react-icons/io5";
 import { IconContext } from "react-icons";
 import {
   BsEmojiSmileFill,
-  BsEmojiNeutralFill,
   BsEmojiFrownFill,
+  BsFillEmojiSurpriseFill,
 } from "react-icons/bs";
 import { FaBrain } from "react-icons/fa";
 import { TbArrowBadgeRightFilled } from "react-icons/tb";
@@ -47,7 +47,7 @@ export default function TopNews(props) {
           >
             {it}{" "}
             {props.sentiment[idx] == 2 && <BsEmojiSmileFill color="#5dc2b1" />}
-            {props.sentiment[idx] == 1 && <BsEmojiNeutralFill color="#729be0" />}
+            {props.sentiment[idx] == 1 && <BsFillEmojiSurpriseFill color="#f0d689" />}
             {props.sentiment[idx] == 0 && <BsEmojiFrownFill color="#ed9568" />}
           </ListItem>
         ))}
