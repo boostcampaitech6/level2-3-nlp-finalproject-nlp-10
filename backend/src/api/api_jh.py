@@ -4,11 +4,12 @@ from schema.response import Topic_titles_response
 from schema.dto import Topic_title_dto, Topic_titles_dto
 from service.service_jh import Service_jh
 from repository.repository_jh import Repository_jh
-from database.orm import Topic, Topic_summary, News_topic, News
+from database.orm import Topic, Topic_summary, News_topic, News, Summary, Sentiment
 from typing import List 
 from collections import Counter
 from starlette.middleware.cors import CORSMiddleware
 from datetime import date
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix='/jh')
 
@@ -81,47 +82,194 @@ def get_topic_titles_handler(
         
     return result
 
-# 뉴스 요약 정보 불러오기 코드
+# 2페이지 기업별 최신 뉴스 불러오기 코드
 @router.get("/get-titles-desc")
 def get_news_by_news_id_ordered_desc_by_date(
     # request: Topic_titles_request,
     company_id: int,
     repo: Repository_jh = Depends()
 ) : 
-    # start_date = request.start_date
-    # end_date = request.end_date
-    # company_id = request.company_id
-    
     # 요약 정보 불러오기
-    topics : List[Topic_summary] = repo.get_topics_summary_by_company(company_id)
+    summarys : List[Topic_summary] = repo.get_news_summary_by_company(company_id)
+        
+    return 1
+
+#################### 기업으로 최신 뉴스 불러오기
+
+# 기업으로 최신 뉴스 불러오기
+@router.get("/get-recent-news")
+def get_recent_news_by_company(
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 뉴스, 요약, 감성 정보 불러오기
+    news : List[News] = repo.get_news_by_company(company_id)
+    summarys : List[Summary] = repo.get_news_summary_by_company(company_id)
+    sentiments : List[Sentiment] = repo.get_news_sentiment_by_company(company_id)
     
-    # 토픽 당 뉴스 개수 세기
-    news: List[News_topic] = repo.get_news_cnt_by_company( company_id)
-    cnt = count_topic_occurrences(news)
-    
-    # 토픽 당 대표 뉴스 가져오기
-    news = repo.get_news_by_company_id(company_id)  
-    news = make_set(news)    
-    news = repo.get_news_ordered_desc_by_date(news) 
-    
-    # 뉴스에서 가장 많이 등장한 sentiment_value 가져오기
-    sentiments = repo.get_news_sentiment_by_company(company_id)
-    sentiment = count_sentiment_occurrences(sentiments)
-    
-    # topic, topic_title_summary, topic_summary, cnt를 response
     result = []
-    for topic, num, new in zip(topics, cnt, news):
+    for one, summary, sentiment in zip(news, summarys, sentiments):
+        cnt : int = repo.get_news_cnt_in_topic_by_news(one.news_id)
         new_dict = {
-            "topic_id": topic.topic_id,
-            "topic_title_summary": topic.topic_title_summary,
-            "topic_summary": topic.topic_summary,
-            "cnt":  num,
-            "title": new,
-            "sentiment": sentiment[0]
+            "news_id": one.news_id,
+            "news_title": one.title,
+            "summary": summary.summary_text,
+            "sentiment": sentiment.sentiment_value,
+            "cnt": cnt
         }
-        result.append(new_dict)    
+        result.append(new_dict)
         
     return result
+
+# 기업으로 뉴스 요약 불러오기
+@router.get("/get-news-summary")
+def get_news_summary_by_company(
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    summarys : List[Summary] = repo.get_news_summary_by_company(company_id)
+        
+    return summarys
+
+# 기업으로 뉴스 불러오기
+@router.get("/get-news-s")
+def get_news_s_by_company(
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    news : List[Summary] = repo.get_news_by_company(company_id)
+        
+    return news
+
+# 기업으로 뉴스 감성 불러오기
+@router.get("/get-news-sentiment")
+def get_news_sentiment_by_company(
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    sentiment : List[Summary] = repo.get_news_sentiment_by_company(company_id)
+        
+    return sentiment
+
+# 뉴스로, 해당 뉴스가 속한 토픽에 할당된 뉴스 개수 불러오기
+@router.get("/get-news-cnt-int-topic")
+def get_news_cnt_in_topic_by_news(
+    news_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    news_cnt : int = repo.get_news_cnt_in_topic_by_news(news_id)
+        
+    return news_cnt
+
+
+#############################################3
+
+# 기업과 날짜로 가장 핫한 토픽의 topic_summary 불러오기
+@router.get("/get-last")
+def get_topic_summary_by_date_and_company_last(
+    repo: Repository_jh = Depends()
+) : 
+    
+    # 현재 날짜
+    today = datetime.now().date()
+
+    # 어제 날짜 계산
+    yesterday = today - timedelta(days=1)
+    
+    aDay = datetime.strptime('2023-11-01', '%Y-%m-%d').date()
+    
+    result = []
+    for company in range(48, 95):
+        # 요약 정보 불러오기
+        topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company_last(aDay, company)
+        
+        # 토픽 당 뉴스 개수 세기
+        news: List[News_topic] = repo.get_news_cnt_by_date_and_company_last(aDay, company)
+        cnt = count_topic_occurrences(news)
+        
+        if cnt:  # 리스트가 비어 있는지 확인
+            max_index = cnt.index(max(cnt))
+        
+        else:
+            max_index = -1
+        
+        if(max_index != -1):
+            new_dict = {
+                "company_id": company,
+                "topic_summary": topics[max_index].topic_summary
+            }
+        else:
+            new_dict = {
+                "company_id": company,
+                "topic_summary": "데이터 없음"
+            }    
+        
+        result.append(new_dict)  
+        
+    return result
+
+
+############################################3
+############3 기업으로 company_info 가져오기
+
+@router.get("/get-company-info")
+def get_company_info_by_company(
+    company_id: int,
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    company_info : int = repo.get_company_info_by_company(company_id)
+        
+    return company_info
+
+
+#############################################3
+
+# # 뉴스 요약 정보 불러오기 코드
+# @router.get("/get-titles-desc")
+# def get_news_by_news_id_ordered_desc_by_date(
+#     # request: Topic_titles_request,
+#     company_id: int,
+#     repo: Repository_jh = Depends()
+# ) : 
+#     # start_date = request.start_date
+#     # end_date = request.end_date
+#     # company_id = request.company_id
+    
+#     # 요약 정보 불러오기
+#     topics : List[Topic_summary] = repo.get_topics_summary_by_company(company_id)
+    
+#     # 토픽 당 뉴스 개수 세기
+#     news: List[News_topic] = repo.get_news_cnt_by_company( company_id)
+#     cnt = count_topic_occurrences(news)
+    
+#     # 토픽 당 대표 뉴스 가져오기
+#     news = repo.get_news_by_company_id(company_id)  
+#     news = make_set(news)    
+#     news = repo.get_news_ordered_desc_by_date(news) 
+    
+#     # 뉴스에서 가장 많이 등장한 sentiment_value 가져오기
+#     sentiments = repo.get_news_sentiment_by_company(company_id)
+#     sentiment = count_sentiment_occurrences(sentiments)
+    
+#     # topic, topic_title_summary, topic_summary, cnt를 response
+#     result = []
+#     for topic, num, new in zip(topics, cnt, news):
+#         new_dict = {
+#             "topic_id": topic.topic_id,
+#             "topic_title_summary": topic.topic_title_summary,
+#             "topic_summary": topic.topic_summary,
+#             "cnt":  num,
+#             "title": new,
+#             "sentiment": sentiment[0]
+#         }
+#         result.append(new_dict)    
+        
+#     return result
 
 
 # 테스트 코드
