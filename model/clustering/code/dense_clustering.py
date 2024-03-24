@@ -33,7 +33,7 @@ def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=3, min_samples=3
     
     return docs_df, cluster.labels_
 
-def dbscan_process(dataset, corpus_embeddings, eps=0.2, min_samples=2):
+def dbscan_process(dataset, corpus_embeddings, eps=0.8, min_samples=2):
     c_model = DBSCAN(eps=0.2, min_samples=min_samples, metric = "cosine")
     result = c_model.fit_predict(corpus_embeddings)
     dataset['Topic']=result
@@ -105,13 +105,13 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
                                     )
             
         elif c_algo=='db' or 'DB':  #뉴스 적을 때
-            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.4, min_samples=2)
+            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=1.3, min_samples=2)
 
         elapsed_time = time.time() - start_time
         print(f'duration : {elapsed_time}s\n')
 
         docs_df = docs_df.reset_index(drop=True)
-        print(docs_df.head())
+        print(docs_df[['title', 'summary', 'Topic']].head(10))
 
         # """클러스터들 평균 엠베딩 만들기(-1 제외)"""
         # cluster_embedding = defaultdict(list)

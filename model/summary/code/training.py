@@ -4,7 +4,7 @@ import pandas as pd
 import os
 from tqdm import tqdm, trange
 from data_load import load_dataset, pd_load_dataset, load_report_dataset
-from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from make_dataset import make_dataset
 from rouge import Rouge
 
@@ -118,29 +118,59 @@ def validation(model, model_name, device):
     
     rouge = Rouge()
     model.to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     context = valid_data['passage']
     target = valid_data['summary'].to_list()
     torch.cuda.empty_cache()
 
+    input_ids = []
+    attention_mask=[]
+    for c in tqdm(context.to_list()):
+        token = tokenizer(c, max_length=1026, truncation=True, padding="max_length")
+        input_ids.append(token['input_ids'])
+        attention_mask.append(token['attention_mask'])
+
+    dataset = TensorDataset(torch.tensor(input_ids), torch.tensor(attention_mask))
+    data_loader = DataLoader(dataset, shuffle=False, batch_size=32)
+
     with torch.no_grad():
         model.eval()
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
         outputs = []
-        for i in trange(len(context), desc='eval '):
-            token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+        for batch in tqdm(data_loader, desc='eval '):
             summary_text_ids = model.generate(
-                                    input_ids=token,
+                                    input_ids=batch[0].to(device),
+                                    attention_mask = batch[1].to(device),
                                     bos_token_id=tokenizer.bos_token_id,
                                     eos_token_id=tokenizer.eos_token_id,
-                                    length_penalty=2.0,
-                                    max_length=220,
+                                    length_penalty=1.5,
+                                    max_length=300,
                                     min_length=30,
                                     num_beams=6,
-                                    repetition_penalty=1.7,
+                                    repetition_penalty=1.5,
                                     ).to("cpu")
             
-            output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
-            outputs.append(output)
+            for out in summary_text_ids:
+                output = tokenizer.decode(out, skip_special_tokens=True)
+                outputs.append(output)
+
+    # with torch.no_grad():
+    #     model.eval()
+    #     outputs = []
+    #     for i in trange(len(context), desc='eval '):
+    #         token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+    #         summary_text_ids = model.generate(
+    #                                 input_ids=token,
+    #                                 bos_token_id=tokenizer.bos_token_id,
+    #                                 eos_token_id=tokenizer.eos_token_id,
+    #                                 length_penalty=1.5,
+    #                                 max_length=300,
+    #                                 min_length=30,
+    #                                 num_beams=6,
+    #                                 repetition_penalty=1.5,
+    #                                 ).to("cpu")
+            
+    #         output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
+    #         outputs.append(output)
         
     score = rouge.get_scores(outputs, target, avg=True)
     for k in score.keys():
