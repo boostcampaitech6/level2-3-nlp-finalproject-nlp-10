@@ -3,9 +3,12 @@ import { useState, useEffect } from "react";
 import "../css/font.css";
 import "../css/layout.css";
 import { Grid } from "@mui/material";
+import { RxDoubleArrowDown, RxDoubleArrowUp } from "react-icons/rx";
 import axios from "axios";
 
 import CompanyRecentNews from "../components/CompanyRecentNews";
+import StockInfo from "../components/StockInfo";
+import SentimentInfo from "../components/SentimentInfo";
 
 function CompanyInfo({ startDate, endDate, company, confirm }) {
   const [cnt, setCnt] = useState([]);
@@ -14,6 +17,7 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
   const [topicSummary, setTopicSummary] = useState([]);
   const [title, setTitle] = useState([]);
   const [sentiment, setSentiment] = useState([]);
+  const [companyId, setCompanyId] = useState(48);
 
   useEffect(() => {
     const start_date = "2023-11-01";
@@ -46,7 +50,16 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
       }
     };
     fetchGetNews();
+    setCompanyId(company)
   }, [confirm]);
+
+  const [isBottom, setIsBottom] = useState(false);
+
+  const handleScroll = (e) => {
+    if (Math.abs(e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop) < 1) { setIsBottom(true) }
+    else setIsBottom(false);
+  }
+
   return (
     <>
       {/* 전체 */}
@@ -66,14 +79,19 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
             borderRight: { md: "1px solid lightgray" },
           }}
         >
-          <CompanyRecentNews
-            cnt={cnt}
-            topicId={topicId}
-            topicTitleSummary={topicTitleSummary}
-            topicSummary={topicSummary}
-            title={title}
-            sentiment={sentiment}
-          />
+          <Grid onScroll={handleScroll} sx={{ height: "66vh", overflowY: "scroll", "&-ms-overflow-style": "none", "&::-webkit-scrollbar": { display: "none" } }}>
+            <CompanyRecentNews
+              cnt={cnt}
+              topicId={topicId}
+              topicTitleSummary={topicTitleSummary}
+              topicSummary={topicSummary}
+              title={title}
+              sentiment={sentiment}
+            />
+          </Grid>
+          <Grid sx={{ height: "4vh", display: "flex", justifyContent: "center", pt: 2, fontSize: "1.3rem", }}>
+            {isBottom ? <RxDoubleArrowUp color="#a1a1a1" /> : <RxDoubleArrowDown color="#a1a1a1" />}
+          </Grid>
         </Grid>
 
         {/* 본문 우측 */}
@@ -81,9 +99,19 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
           item
           sx={{
             width: { sm: "100%", md: "50%" },
-            p: 4,
+            display: "flex",
+            flexDirection: "column",
           }}
-        ></Grid>
+        >
+          <Grid height={"35vh"} >
+            <StockInfo />
+          </Grid>
+          <Grid height={"35vh"} >
+            <SentimentInfo
+              companyId={companyId}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </>
   );
