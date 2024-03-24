@@ -63,9 +63,9 @@ const Bub = ({
 }) => {
   const [data, setData] = useState([
     {
-      label: "필터를 적용하세요",
-      value: 5,
-      color: "rgb(255, 69, 96)",
+      label: "SET FILTER",
+      value: 3,
+      color: "#4EBF9A",
     },
   ]);
 
@@ -88,8 +88,8 @@ const Bub = ({
     // setData(diagram);
     const handleResize = () => {
       d3.select(containerRef.current).selectAll("*").remove();
-      const containerWidth = containerRef.current.offsetWidth - 100;
-      const containerHeight = containerRef.current.offsetHeight - 100;
+      const containerWidth = containerRef.current.offsetWidth - 50;
+      const containerHeight = containerRef.current.offsetHeight - 20;
 
       const chartContainer = d3.select(containerRef.current);
       chartContainer.select("svg").remove();
@@ -144,6 +144,7 @@ const Bub = ({
         .attr("dy", ".3em")
         .style("text-anchor", "middle")
         .style("font-weight", "bold")
+        .style("color", "white")
         .style("font-style", "Georgia")
         .style("opacity", 0)
         // .text((d) => d.data.label);
@@ -253,7 +254,7 @@ const Bub = ({
   return (
     <Box>
       <div className="bubble-chart-container">
-        <div ref={containerRef} style={{ height: "750px" }} />
+        <div ref={containerRef} style={{ height: "50vh" }} />
         <Tooltip />
       </div>
     </Box>

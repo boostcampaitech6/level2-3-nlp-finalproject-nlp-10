@@ -1,6 +1,5 @@
 import asyncio
 from crawling import RestClient, NewsCrawler
-from datetime import datetime
 
 from collections import Counter
 from functools import reduce
@@ -154,6 +153,7 @@ class Engine:
         start_time, end_time = self.news_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.news_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
         # 뉴스 데이터 크롤링.
+        
         await self.crawling_news()
         logger.info(f"NEWS Crawling Done")
         
@@ -232,7 +232,7 @@ class Engine:
         
         # NEWS SENTIMENT 데이터 생성
         sentiment_info = self.preprocess_sentiemnt(news_data = news_data,
-                                                   pretrained_model_name_or_path='model/sentiment')
+                                                   pretrained_model_name_or_path='/data/ephemeral/home/data/model/sentiment')
         logger.info(f"NEWS {table_name} Done")
         
         # SENTIMENT TABLE에 데이터 입력
@@ -653,17 +653,17 @@ class Engine:
         crwaler = NewsCrawler(client)
         
         await asyncio.gather(
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='주요뉴스', save_dir=f'/data/ephemeral/home/data/mainnews_url.csv'),
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='기업/종목분석', save_dir=f'/data/ephemeral/home/data/companynews_url.csv'),
-                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='공시/메모', save_dir=f'/data/ephemeral/home/data/disclosurenews_url.csv'),
-                crwaler.dynamic_crawling_news_url(start_date=self.today, end_date=self.today, save_dir=f'/data/ephemeral/home/data/economynews_url.csv')
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='주요뉴스', save_dir=f'/data/ephemeral/home/data/data/mainnews_url.csv'),
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='기업/종목분석', save_dir=f'/data/ephemeral/home/data/data/companynews_url.csv'),
+                crwaler.crawling_news_url(start_date=self.today, end_date=self.today, section='공시/메모', save_dir=f'/data/ephemeral/home/data/data/disclosurenews_url.csv'),
+                crwaler.dynamic_crawling_news_url(start_date=self.today, end_date=self.today, save_dir=f'/data/ephemeral/home/data/data/economynews_url.csv')
             )
 
         await asyncio.gather(
-                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/mainnews_url.csv', merge_data_path=f'/data/ephemeral/home/data/mainnews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/companynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/companynews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/disclosurenews_url.csv', merge_data_path=f'/data/ephemeral/home/data/disclosurenews_all.csv'),
-                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/economynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/economynews_all.csv')
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/data/mainnews_url.csv', merge_data_path=f'/data/ephemeral/home/data/data/mainnews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/data/companynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/data/companynews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/data/disclosurenews_url.csv', merge_data_path=f'/data/ephemeral/home/data/data/disclosurenews_all.csv'),
+                crwaler.crawling_news_contents(url_data_path=f'/data/ephemeral/home/data/data/economynews_url.csv', merge_data_path=f'/data/ephemeral/home/data/data/economynews_all.csv')
             )
     
     
@@ -683,7 +683,6 @@ class Engine:
 
     async def fill(self):
         news_exist = await self.fill_news()
-        print(news_exist)
         # 수집된 뉴스가 있다면 다음 프로세스 실행.
         if news_exist:
             self.fill_news_company()
@@ -693,7 +692,6 @@ class Engine:
             self.fill_news_topic()
             self.fill_topic_image()
             self.fill_topic_summary()
-
 
 
 if __name__ == "__main__":
@@ -708,6 +706,10 @@ if __name__ == "__main__":
                     TOPIC 삭제 후 재 생성, 중복 없음 (확인)
 
     """
+    # 로그 파일 저장
+    log_file_path = "/data/ephemeral/home/data/log/logfile.log"
+    logger.add(log_file_path, rotation="500 MB", level="INFO")  # 로그 파일 경로와 로그 레벨 설정
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--period', type=int, default=24, help='time period for crawling news')
     parser.add_argument('--day_diff', type=int, default=0, help='day diff from now')
@@ -724,13 +726,6 @@ if __name__ == "__main__":
                                 db_port = db_port, 
                                 period = args.period,
                                 day_diff = args.day_diff)
-    
-    
-    with open('/data/ephemeral/home/data/log/log.txt', 'a') as file:
-        file.write(f"""Automation Process Start {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                        TIME PERIOD : NEWS RELATED TABLES  {engine.news_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {engine.news_end_time.strftime('%Y-%m-%d %H:%M:%S')}
-                                      TOPIC RELATED TABLES {engine.topic_start_time.strftime('%Y-%m-%d %H:%M:%S')} ~ {engine.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')}
-                        \n""")
         
     asyncio.run(engine.fill())
     

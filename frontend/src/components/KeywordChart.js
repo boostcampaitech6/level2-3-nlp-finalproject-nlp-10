@@ -46,16 +46,16 @@ export default function KeywordChart({
   const [diagram, setDiagram] = useState([]);
   const [diagram2, setDiagram2] = useState([]);
   const colorHere = [
-    "rgb(255, 69, 96)",
-    "rgb(254, 176, 25)",
-    "rgb(0, 143, 251)",
-    "rgb(119, 93, 208)",
-    "rgb(0, 227, 150)",
-    "#FF9B7B",
-    "#519F5B",
-    "#CD7A4B",
-    "#00A0D3",
-    "#73676B",
+    "#4EBF9A",
+    "#2AAD82",
+    "#3CC7B2",
+    "#4E85BF",
+    "#4E56BF",
+    "#4A6FD4",
+    "#7BD487",
+    "#2DBAD6",
+    "#3CC7B2",
+    "#4EBF9A",
   ];
   const sizeHere = [68, 51, 15, 11, 11, 6, 7, 7, 5, 5];
   useEffect(() => {

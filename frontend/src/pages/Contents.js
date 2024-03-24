@@ -67,12 +67,13 @@ export default function Main() {
     <>
       <div className={styles.root} name="main">
         <NavBar selectedTab={value} onClickTab={handleChange} />
-        <FilterTab
+        {value != "2" && <FilterTab
           changeStartDate={handleChangeStartDate}
           changeEndDate={handleChangeEndDate}
           changeCompany={handleChangeCompany}
           changeConfirm={handleChangeConfirm}
-        />
+          tabNum={value}
+        />}
         {value == "0" && (
           <Allnews
             startDate={startDate}
