@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import "../css/font.css";
 import "../css/layout.css";
 import { Grid } from "@mui/material";
+import { RxDoubleArrowDown, RxDoubleArrowUp } from "react-icons/rx";
 import axios from "axios";
 
 import CompanyRecentNews from "../components/CompanyRecentNews";
@@ -47,6 +48,14 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
     };
     fetchGetNews();
   }, [confirm]);
+
+  const [isBottom, setIsBottom] = useState(false);
+
+  const handleScroll = (e) => {
+    if (Math.abs(e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop) < 1) { setIsBottom(true) }
+    else setIsBottom(false);
+  }
+
   return (
     <>
       {/* 전체 */}
@@ -66,14 +75,19 @@ function CompanyInfo({ startDate, endDate, company, confirm }) {
             borderRight: { md: "1px solid lightgray" },
           }}
         >
-          <CompanyRecentNews
-            cnt={cnt}
-            topicId={topicId}
-            topicTitleSummary={topicTitleSummary}
-            topicSummary={topicSummary}
-            title={title}
-            sentiment={sentiment}
-          />
+          <Grid onScroll={handleScroll} sx={{ height: "66vh", overflowY: "scroll", "&-ms-overflow-style": "none", "&::-webkit-scrollbar": { display: "none" } }}>
+            <CompanyRecentNews
+              cnt={cnt}
+              topicId={topicId}
+              topicTitleSummary={topicTitleSummary}
+              topicSummary={topicSummary}
+              title={title}
+              sentiment={sentiment}
+            />
+          </Grid>
+          <Grid sx={{ height: "4vh", display: "flex", justifyContent: "center", pt: 2, fontSize: "1.3rem", }}>
+            {isBottom ? <RxDoubleArrowUp color="#a1a1a1" /> : <RxDoubleArrowDown color="#a1a1a1" />}
+          </Grid>
         </Grid>
 
         {/* 본문 우측 */}
