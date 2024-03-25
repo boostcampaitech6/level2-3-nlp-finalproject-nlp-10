@@ -183,3 +183,26 @@ class Company_price_info(Base):
     외국인한도소진률 = Column(Float, nullable=False)
     
     
+
+class Economy_price_info(Base):
+    __tablename__ = "ECONOMY_PRICE_INFO"
+    
+    # columns
+    date = Column(Date, nullable=False, primary_key=True, autoincrement =False)
+    코스피 = Column(Float, nullable=False)
+    코스닥 = Column(Float, nullable=False)
+    코스피200 = Column(Float, nullable=False)
+    금 = Column(Float, nullable=False)
+    비트코인 = Column(Float, nullable=False)
+    다우존스 = Column(Float, nullable=False)
+    나스닥 = Column(Float, nullable=False)
+    SnP500 = Column(Float, nullable=False)
+    환율_원화 = Column(Float, nullable=False)
+    환율_유로화 = Column(Float, nullable=False)
+    WTI = Column(Float, nullable=False)
+    한국채권_5년물 = Column(Float, nullable=False)
+    한국채권_10년물 = Column(Float, nullable=False)
+    미국채권_5년물 = Column(Float, nullable=False)
+    미국채권_10년물 = Column(Float, nullable=False)
+
+    

@@ -227,6 +227,16 @@ def get_company_info_by_company(
     return company_info
 
 
+############3 가장 최근 경제 지표 값들 (economy_price_info) 가져오기
+@router.get("/get-economy-info")
+def get_economy_info_recent(    
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    economy_info = repo.get_economy_price_info_recent()
+        
+    return economy_info 
+
 #############################################3
 
 # # 뉴스 요약 정보 불러오기 코드
