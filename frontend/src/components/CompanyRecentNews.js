@@ -11,7 +11,7 @@ import {
 export default function CompanyRecentNews(props) {
   return (
     <>
-      {props.newsId.slice(0, 30).map((news, idx) => (
+      {props.newsId.map((news, idx) => (
         <Box
           key={idx}
           sx={{
@@ -34,7 +34,7 @@ export default function CompanyRecentNews(props) {
             {props.sentiment[idx] == 2 && <BsEmojiSmileFill color="#5dc2b1" />}
             {props.sentiment[idx] == 1 && <BsFillEmojiSurpriseFill color="#f0d689" />}
             {props.sentiment[idx] == 0 && <BsEmojiFrownFill color="#ed9568" />}
-            &nbsp;| 관련 뉴스 {props.cnt}건
+            &nbsp;| 관련 뉴스 {props.cnt[idx]}건
           </Box>
         </Box>
       ))}

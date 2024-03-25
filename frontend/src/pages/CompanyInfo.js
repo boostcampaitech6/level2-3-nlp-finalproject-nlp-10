@@ -1,8 +1,8 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../css/font.css";
 import "../css/layout.css";
-import { Grid } from "@mui/material";
+import { Grid, Button } from "@mui/material";
 import { RxDoubleArrowDown, RxDoubleArrowUp } from "react-icons/rx";
 import axios from "axios";
 
@@ -17,6 +17,19 @@ function CompanyInfo({ company, confirm }) {
   const [summary, setSummary] = useState([]);
   const [sentiment, setSentiment] = useState([]);
   const [companyId, setCompanyId] = useState(48);
+  const [companyInfo, setCompanyInfo] = useState({});
+  const [positiveNum, setPositiveNum] = useState({});
+  const [neutralNum, setNeutralNum] = useState({});
+  const [negativeNum, setNegativeNum] = useState({});
+
+  const divRef = useRef(null);
+
+  const scrollToTop = () => {
+    divRef.current.scroll({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   useEffect(() => {
     const company_id = 48;
@@ -38,19 +51,40 @@ function CompanyInfo({ company, confirm }) {
         setNewsTitle(response.data.map((item) => item.news_title));
         setSummary(response.data.map((item) => item.summary));
         setSentiment(response.data.map((item) => item.sentiment));
+        setPositiveNum(response.data.filter((item) => item.sentiment === 2).length);
+        setNeutralNum(response.data.filter((item) => item.sentiment === 1).length);
+        setNegativeNum(response.data.filter((item) => item.sentiment === 0).length);
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
     };
+
+    const fetchCompanyInfo = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/jh/get-company-info",
+          {
+            params: {
+              company_id: company ? company : company_id,
+            }
+          }
+        )
+        console.log("company info: ", response.data)
+        setCompanyInfo(response.data)
+      } catch (err) {
+        console.log("company info fetch error")
+      }
+    }
     fetchGetNews();
+    fetchCompanyInfo();
     setCompanyId(company)
+    scrollToTop()
   }, [confirm]);
 
   const [isBottom, setIsBottom] = useState(false);
   const [isTop, setIsTop] = useState(true);
 
   const handleScroll = (e) => {
-    if (Math.abs(e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop) < 1) {
+    if (Math.abs(e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop) <= 1) {
       setIsBottom(true)
       setIsTop(false)
     }
@@ -79,7 +113,7 @@ function CompanyInfo({ company, confirm }) {
             borderRight: { md: "1px solid lightgray" },
           }}
         >
-          <Grid onScroll={handleScroll} sx={{ height: "66vh", overflowY: "scroll", "&-ms-overflow-style": "none", "&::-webkit-scrollbar": { display: "none" } }}>
+          <Grid onScroll={handleScroll} ref={divRef} sx={{ height: "72vh", overflowY: "scroll", "&-ms-overflow-style": "none", "&::-webkit-scrollbar": { display: "none" } }}>
             <CompanyRecentNews
               cnt={cnt}
               newsId={newsId}
@@ -88,9 +122,9 @@ function CompanyInfo({ company, confirm }) {
               sentiment={sentiment}
             />
           </Grid>
-          <Grid sx={{ height: "4vh", display: "flex", justifyContent: "center", pt: 2, fontSize: "1.3rem", }}>
-            {isBottom && <RxDoubleArrowUp color="#a1a1a1" />}
-            {isTop && <RxDoubleArrowDown color="#a1a1a1" />}
+          <Grid sx={{ height: "3vh", display: "flex", justifyContent: "center", pt: 2, }}>
+            {isBottom && <Button onClick={() => scrollToTop()}><RxDoubleArrowUp color="#a1a1a1" fontSize={"1.3rem"} /></Button>}
+            {isTop && <RxDoubleArrowDown color="#a1a1a1" fontSize={"1.3rem"} />}
           </Grid>
         </Grid>
 
@@ -103,12 +137,18 @@ function CompanyInfo({ company, confirm }) {
             flexDirection: "column",
           }}
         >
-          <Grid height={"35vh"} >
-            <StockInfo />
+          <Grid >
+            <StockInfo
+              companyInfo={companyInfo}
+              companyId={companyId}
+            />
           </Grid>
-          <Grid height={"35vh"} >
+          <Grid>
             <SentimentInfo
               companyId={companyId}
+              positiveNum={positiveNum}
+              neutralNum={neutralNum}
+              negativeNum={negativeNum}
             />
           </Grid>
         </Grid>
