@@ -17,9 +17,10 @@ for file_name in file_list:
     
     df = pd.read_csv(os.path.join(dataset_path, file_name))
 
-    embeddings = model.encode(df['summary'])
-    e_df = pd.DataFrame({'embedding':embeddings.tolist()})
-    new_df = pd.concat([df, e_df], axis=1)
+    embeddings = model.encode(df['summary']).tolist()
+    df['embedding'] = embeddings
+    new_df = df
+    new_df.head()
 
 duration = time.time()-start_time
 
