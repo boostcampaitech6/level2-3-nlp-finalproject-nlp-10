@@ -210,19 +210,23 @@ class MacroEngine:
             economy_price_info_info[key] = value
         return [economy_price_info_info]
     
-    def fill(self):
-        self.fill_company_close()
-        self.fill_company_price_info()
-        self.fill_economy_price_info()
+    def fill(self, stock, macro):
+        if stock:
+            self.fill_company_close()
+            self.fill_company_price_info()
+        
+        if macro:        
+            self.fill_economy_price_info()
     
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--day_diff', type=int, default=0, help='day diff from now')
+    parser.add_argument('--stock', type=int, default=1, help='fill stock info')
+    parser.add_argument('--macro', type=int, default=1, help='fill macro info')
     args = parser.parse_args()
     
     db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
-    macro_engine = MacroEngine(db_user, db_password, db_host, db_database, db_port, day_diff = i)
-    macro_engine.fill_economy_price_info()
+    macro_engine = MacroEngine(db_user, db_password, db_host, db_database, db_port, day_diff = args.day_diff)
     
-    macro_engine.fill()
+    macro_engine.fill(args.stock, args.macro)
