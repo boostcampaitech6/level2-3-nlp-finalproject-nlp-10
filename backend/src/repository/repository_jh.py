@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import select, and_, func 
+from sqlalchemy import select, and_, func, not_ 
 from schema.response import TopicImageURLResponse
 from fastapi import Depends
 from database.connection import get_db
@@ -65,7 +65,8 @@ class Repository_jh:
         return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
                 Topic.topic_date >= start_date,
                 Topic.topic_date <= end_date,
-                Topic.company_id == company_id
+                Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
             )).all()
         
     # 날짜와 기업으로 토픽에 맞는 topic_summary 불러오기     
@@ -79,7 +80,8 @@ class Repository_jh:
         return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.topic_id).filter(and_(
                 Topic.topic_date >= start_date,
                 Topic.topic_date <= end_date,
-                Topic.company_id == company_id
+                Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
             )).all()
         
     # 날짜와 기업으로 토픽의 뉴스들 sentiment들을 불러오기    
@@ -100,7 +102,8 @@ class Repository_jh:
             filter(and_(
                 Topic.topic_date >= start_date,
                 Topic.topic_date <= end_date,
-                Topic.company_id == company_id
+                Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
             )).all()
             
         # 날짜와 기업으로 토픽에 맞는 뉴스 불러오기    
@@ -207,18 +210,20 @@ class Repository_jh:
 #############################333
 # 기업과 날짜로 가장 핫한 토픽의 topic_summary 불러오기
 
-    def get_topics_summary_by_date_and_company_last(self, date, company_id) -> List[Topic_summary]:
+    def get_topics_summary_by_date_and_company_last(self, company_id) -> List[Topic_summary]:
         
         return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
-                Topic.topic_date == date,
-                Topic.company_id == company_id
-            )).all()
+                Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
+            )).order_by(Topic.topic_date.desc()).\
+            limit(30).all()
     
-    def get_news_cnt_by_date_and_company_last(self, date, company_id) -> List[News_topic]:
+    def get_news_cnt_by_date_and_company_last(self, company_id) -> List[News_topic]:
         return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.topic_id).filter(and_(
-                Topic.topic_date == date,
-                Topic.company_id == company_id
-            )).all()    
+                Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
+            )).order_by(Topic.topic_date.desc()).\
+            limit(30).all()    
  
  
  #################################3
@@ -239,6 +244,7 @@ class Repository_jh:
                 Topic.topic_date >= start_date,
                 Topic.topic_date <= end_date,
                 Topic.company_id == company_id,
+                not_(Topic.topic_code.like('%-1'))
             )).all()
    
     
