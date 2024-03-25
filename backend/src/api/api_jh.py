@@ -5,7 +5,7 @@ from schema.dto import Topic_title_dto, Topic_titles_dto
 from service.service_jh import Service_jh
 from repository.repository_jh import Repository_jh
 from database.orm import Topic, Topic_summary, News_topic, News, Summary, Sentiment
-from typing import List 
+from typing import List, Tuple
 from collections import Counter
 from starlette.middleware.cors import CORSMiddleware
 from datetime import date
@@ -35,6 +35,10 @@ def count_sentiment_occurrences(sentiments):
     sentiment_counts = Counter(entry["sentiment_value"] for entry in sentiments)
     most_common_value = max(sentiment_counts, key=sentiment_counts.get)
     return most_common_value[0]
+
+def filter_topic_code(topics: List[Topic]):
+    filtered_topics = [topic for topic in topics if not topic.topic_code.endswith('-1')]
+    return filtered_topics
 
 # 뉴스 요약 정보 불러오기 코드
 @router.get("/get-titles")
@@ -166,8 +170,6 @@ def get_news_cnt_in_topic_by_news(
     return news_cnt
 
 
-#############################################3
-
 # 기업과 날짜로 가장 핫한 토픽의 topic_summary 불러오기
 @router.get("/get-last")
 def get_topic_summary_by_date_and_company_last(
@@ -185,10 +187,10 @@ def get_topic_summary_by_date_and_company_last(
     result = []
     for company in range(48, 95):
         # 요약 정보 불러오기
-        topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company_last(aDay, company)
+        topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company_last(company)
         
         # 토픽 당 뉴스 개수 세기
-        news: List[News_topic] = repo.get_news_cnt_by_date_and_company_last(aDay, company)
+        news: List[News_topic] = repo.get_news_cnt_by_date_and_company_last(company)
         cnt = count_topic_occurrences(news)
         
         if cnt:  # 리스트가 비어 있는지 확인
@@ -213,9 +215,7 @@ def get_topic_summary_by_date_and_company_last(
     return result
 
 
-############################################3
-############3 기업으로 company_info 가져오기
-
+# 기업으로 company_info 가져오기
 @router.get("/get-company-info")
 def get_company_info_by_company(
     company_id: int,
@@ -227,51 +227,64 @@ def get_company_info_by_company(
     return company_info
 
 
-#############################################3
-
-# # 뉴스 요약 정보 불러오기 코드
-# @router.get("/get-titles-desc")
-# def get_news_by_news_id_ordered_desc_by_date(
-#     # request: Topic_titles_request,
-#     company_id: int,
-#     repo: Repository_jh = Depends()
-# ) : 
-#     # start_date = request.start_date
-#     # end_date = request.end_date
-#     # company_id = request.company_id
-    
-#     # 요약 정보 불러오기
-#     topics : List[Topic_summary] = repo.get_topics_summary_by_company(company_id)
-    
-#     # 토픽 당 뉴스 개수 세기
-#     news: List[News_topic] = repo.get_news_cnt_by_company( company_id)
-#     cnt = count_topic_occurrences(news)
-    
-#     # 토픽 당 대표 뉴스 가져오기
-#     news = repo.get_news_by_company_id(company_id)  
-#     news = make_set(news)    
-#     news = repo.get_news_ordered_desc_by_date(news) 
-    
-#     # 뉴스에서 가장 많이 등장한 sentiment_value 가져오기
-#     sentiments = repo.get_news_sentiment_by_company(company_id)
-#     sentiment = count_sentiment_occurrences(sentiments)
-    
-#     # topic, topic_title_summary, topic_summary, cnt를 response
-#     result = []
-#     for topic, num, new in zip(topics, cnt, news):
-#         new_dict = {
-#             "topic_id": topic.topic_id,
-#             "topic_title_summary": topic.topic_title_summary,
-#             "topic_summary": topic.topic_summary,
-#             "cnt":  num,
-#             "title": new,
-#             "sentiment": sentiment[0]
-#         }
-#         result.append(new_dict)    
+# 가장 최근 경제 지표 값들 (economy_price_info) 가져오기
+@router.get("/get-economy-info")
+def get_economy_info_recent(   
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    economy_info = repo.get_economy_price_info_recent()
         
-#     return result
+    return economy_info 
+
+# 가장 최근 경제 지표 값들 (economy_price_info)의 등략률 계산해서 반환하기
+@router.get("/get-economy-info-updown-rate")
+def get_economy_info_updown_rate(   
+    repo: Repository_jh = Depends()
+)  -> dict:
+    # 요약 정보 불러오기
+    economy_info_1day_before = repo.get_economy_price_info_recent()
+    economy_info_2day_before = repo.get_second_economy_price_info()
+
+    economy_index_list = ['코스피', '코스닥', '코스피200', '금', '비트코인', '다우존스', '나스닥', 'SnP500', 
+                    '환율_원화', 'WTI', '한국채권_5년물', '한국채권_10년물', '미국채권_5년물', '미국채권_10년물']
+    
+    updown_rate_dict = {}
+    for index_name in economy_index_list:
+        value_1 = getattr(economy_info_1day_before , index_name, None)
+        value_2 = getattr(economy_info_2day_before , index_name, None)
+        updown_rate = (value_1 - value_2)/value_2*100
+        updown_rate_dict[index_name + '_등락률'] = float(f"{updown_rate:.3f}") 
+    return updown_rate_dict
 
 
+# 기업의 최신 종가(close) 가격 불러오기 최근 90개
+@router.get("/get-company-close-price-90", response_model=Tuple[List[str], List[int]])
+def get_company_close_recent_90(
+    company_id: int,     
+    repo: Repository_jh = Depends()
+) -> Tuple[List[str], List[int]]: 
+    # 요약 정보 불러오기
+    company_close_90 = repo.get_company_stock_close_price_recent_90day(company_id)
+    
+    # 날짜와 종가(close price)를 각각 분리하여 리스트 생성
+    dates = [item[0].isoformat() for item in company_close_90]  
+    close_prices = [item[1] for item in company_close_90]
+    
+    # 날짜 리스트와 종가 리스트를 튜플로 묶어 반환
+    return dates, close_prices
+
+
+@router.get("/get-topic-image-url")
+def some_path_function(
+    topic_id : int,
+    repo: Repository_jh = Depends()
+    ):
+
+    return repo.get_topic_image_url_by_date_and_company(topic_id)
+
+
+#############################################################################################################
 # 테스트 코드
 # 뉴스 요약 정보 불러오기 코드
 @router.get("/get-news")
@@ -376,11 +389,3 @@ def get_sentiment_handler(
     # sentiment = count_sentiment_occurrences(sentiments)
     return sentiments
 
-
-@router.get("/get-topic-image-url")
-def some_path_function(
-    topic_id : int,
-    repo: Repository_jh = Depends()
-    ):
-
-    return repo.get_topic_image_url_by_date_and_company(topic_id)
