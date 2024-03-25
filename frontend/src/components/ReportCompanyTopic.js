@@ -40,7 +40,7 @@ export default function ReportCompanyTopic(props) {
     <>
       <Grid sx={{ display: "flex", justifyContent: "center" }}>
         <List>
-          {props.companyTopic.map((company, idx) => (
+          {props.companyTopic.filter((company) => !companyNames[company["company_id"] - 48]).map((company, idx) => (
             <Box sx={{ display: "flex", flexDirection: "column", pt: 1 }}>
               <Typography fontFamily={"SebangGothic"} fontSize={"1.2rem"} display={"flex"} alignItems={"center"}>
                 <RiCornerDownRightFill color={idx % 2 == 1 ? "#6b6868" : "#82bab4"} fontSize={"1.5rem"} />&nbsp;&nbsp;{companyNames[idx]}
