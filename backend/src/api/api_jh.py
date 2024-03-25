@@ -36,6 +36,10 @@ def count_sentiment_occurrences(sentiments):
     most_common_value = max(sentiment_counts, key=sentiment_counts.get)
     return most_common_value[0]
 
+def filter_topic_code(topics: List[Topic]):
+    filtered_topics = [topic for topic in topics if not topic.topic_code.endswith('-1')]
+    return filtered_topics
+
 # 뉴스 요약 정보 불러오기 코드
 @router.get("/get-titles")
 def get_topic_titles_handler(
@@ -183,10 +187,10 @@ def get_topic_summary_by_date_and_company_last(
     result = []
     for company in range(48, 95):
         # 요약 정보 불러오기
-        topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company_last(aDay, company)
+        topics : List[Topic_summary] = repo.get_topics_summary_by_date_and_company_last(company)
         
         # 토픽 당 뉴스 개수 세기
-        news: List[News_topic] = repo.get_news_cnt_by_date_and_company_last(aDay, company)
+        news: List[News_topic] = repo.get_news_cnt_by_date_and_company_last(company)
         cnt = count_topic_occurrences(news)
         
         if cnt:  # 리스트가 비어 있는지 확인
