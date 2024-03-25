@@ -24,7 +24,7 @@ export default function FilterTab({
 }) {
   const today = new Date();
   const companyNames = [
-    "삼성",
+    "삼성전자",
     "SK하이닉스",
     "LG에너지솔루션",
     "기아",
@@ -134,7 +134,7 @@ export default function FilterTab({
                 label="Company"
                 onChange={handleChangeCompany}
               >
-                <MenuItem value={48}>삼성</MenuItem>
+                <MenuItem value={48}>삼성전자</MenuItem>
                 <MenuItem value={49}>SK하이닉스</MenuItem>
                 <MenuItem value={50}>LG에너지솔루션</MenuItem>
                 <MenuItem value={51}>기아</MenuItem>

@@ -42,11 +42,6 @@ class Repository_jh:
     
     # 기업으로 토픽의 뉴스들 sentiment들을 불러오기    
     def get_news_sentiment_by_company(self, company_id) -> List[any]:
-        # return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.id).filter(and_(
-        #         Topic.topic_date >= start_date,
-        #         Topic.topic_date <= end_date,
-        #         Topic.company_id == company_id
-        #     )).all()
     
         news_topic_alias = aliased(News_topic)
         news_alias = aliased(News)
@@ -59,7 +54,6 @@ class Repository_jh:
                 Topic.company_id == company_id
             ).all()
         
-    ################################33    
     # 날짜와 기업으로 토픽에 맞는 topic_summary 불러오기     
     def get_topics_summary_by_date_and_company(self, start_date, end_date, company_id) -> List[Topic_summary]:
         return self.session.query(Topic_summary).join(Topic, Topic_summary.topic_id == Topic.topic_id).filter(and_(
@@ -86,12 +80,7 @@ class Repository_jh:
         
     # 날짜와 기업으로 토픽의 뉴스들 sentiment들을 불러오기    
     def get_news_sentiment_by_date_and_company(self, start_date, end_date, company_id) -> List[any]:
-        # return self.session.query(News_topic).join(Topic, News_topic.topic_id == Topic.id).filter(and_(
-        #         Topic.topic_date >= start_date,
-        #         Topic.topic_date <= end_date,
-        #         Topic.company_id == company_id
-        #     )).all()
-    
+
         news_topic_alias = aliased(News_topic)
         news_alias = aliased(News)
 
@@ -117,32 +106,12 @@ class Repository_jh:
     # 기업의 최신 종가(close) 가격 불러오기
     def get_company_stock_close_price_recent_90day(self, company_id):
 
-        # 동적으로 칼럼 이름 생성 (예: 'col_48')
-        column_name = f'col_{company_id}'
-        
-        # getattr를 사용하여 모델에서 해당 컬럼 찾기
-        target_column = getattr(Company_Close_price, column_name, None)
+        column_name = f'col_{company_id}'# getattr를 사용하여 모델에서 해당 컬럼 찾기
+        target_column = getattr(Company_Close_price, column_name, None) # getattr를 사용하여 모델에서 해당 컬럼 찾기
         
         return self.session.query(Company_Close_price.date, target_column)\
             .order_by(Company_Close_price.date.desc()).limit(90).all() 
-        
 
-
-    #################3 기업으로 최신 뉴스 정보 불러오기
-        
-    # # 기업으로 뉴스들 요약 불러오기    
-    # def get_news_summary_by_company(self, company_id) -> List[any]:
-    
-    #     news_topic_alias = aliased(News_topic)
-    #     news_alias = aliased(News)
-
-    #     return self.session.query(Summary).\
-    #         join(news_alias, Summary.news_id == news_alias.news_id).\
-    #         join(news_topic_alias, news_alias.news_id == news_topic_alias.news_id).\
-    #         join(Topic, news_topic_alias.topic_id == Topic.topic_id).\
-    #         filter(
-    #             Topic.company_id == company_id
-    #         ).all()   
     
     # 기업으로 뉴스들 요약 불러오기    
     def get_news_summary_by_company(self, company_id) -> List[any]:
@@ -207,7 +176,6 @@ class Repository_jh:
             ).scalar()            
             
             
-#############################333
 # 기업과 날짜로 가장 핫한 토픽의 topic_summary 불러오기
 
     def get_topics_summary_by_date_and_company_last(self, company_id) -> List[Topic_summary]:
@@ -226,15 +194,13 @@ class Repository_jh:
             limit(30).all()    
  
  
- #################################3
- # 기업으로 가장 최근 company_info 불러오기        
+    # 기업으로 가장 최근 company_info 불러오기        
     def get_company_info_by_company(self, company_id) -> Company_price_info:
         return self.session.query(Company_price_info).filter(and_(
                 Company_price_info.company_id == company_id
             )).order_by(Company_price_info.date.desc()).first()      
             
             
- #####################33           
     # 날짜와 기업으로 토픽의 뉴스들을 불러오기    
     def get_news_by_date_and_company(self, start_date, end_date, company_id):
 
@@ -276,9 +242,17 @@ class Repository_jh:
             return TopicImageURLResponse()
 
 
- # 가장 최근 economy_price_info 불러오기        
+    # 가장 최근 economy_price_info 불러오기  (경제지표)     
     def get_economy_price_info_recent(self) -> Economy_price_info:
-        return self.session.query(Economy_price_info).order_by(Economy_price_info.date.desc()).first() 
+        return self.session.query(Economy_price_info)\
+                        .order_by(Economy_price_info.date.desc()).first() 
+    
+    # 가장 최근의 경제지표 정보에서 두 번째로 최신인 데이터를 불러오기 (경제지표 등락률 계산용)
+    def get_second_economy_price_info(self) -> Economy_price_info:
+        return self.session.query(Economy_price_info)\
+                        .order_by(Economy_price_info.date.desc())\
+                        .offset(1).first()
+
 
         
     # 테스트 코드

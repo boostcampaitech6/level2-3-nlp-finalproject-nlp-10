@@ -14,18 +14,12 @@ import "../css/font.css";
 
 const date = dayjs().format('YYYY.MM.DD')
 
-const data = [
-  { label: '긍정', value: 25, color: '#5dc2b1' },
-  { label: '중립', value: 30, color: '#f0d689' },
-  { label: '부정', value: 17, color: '#ed9568' },
-];
-
 const getArcLabel = (params) => {
   return `${params.value}건`;
 };
 
 const companyNames = [
-  "삼성",
+  "삼성전자",
   "SK하이닉스",
   "LG에너지솔루션",
   "기아",
@@ -46,15 +40,22 @@ const companyNames = [
 ];
 
 export default function SentimentInfo(props) {
-  console.log('company: ', companyNames[props.companyId])
+  var data = [
+    { label: '긍정', value: props.positiveNum, color: '#5dc2b1' },
+    { label: '중립', value: props.neutralNum, color: '#f0d689' },
+    { label: '부정', value: props.NegativeNum, color: '#ed9568' },
+  ];
+
+  data = data.filter((sentiment) => sentiment.value)
+
   return (
     <>
       <Box sx={{ bgcolor: "#b0e2e8", p: 0.3, pl: 1, fontFamily: "GmarketSansMedium", display: "flex", alignItems: "center" }}>
-        <FaCheckSquare /> &nbsp; {props.companyId ? companyNames[props.companyId - 48] : "삼성"} {date} 뉴스 체크
+        <FaCheckSquare /> &nbsp; {props.companyId ? companyNames[props.companyId - 48] : "삼성전자"} {date} 인식 체크
       </Box>
       <Grid container sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-        <Grid sx={{ width: "40%" }}>
-          <PieChart skipAnimation
+        <Grid sx={{ width: "40%", height: "38vh" }}>
+          <PieChart
             series={[
               {
                 startAngle: -30,
@@ -64,7 +65,7 @@ export default function SentimentInfo(props) {
                 cornerRadius: 3,
                 data,
                 cx: 125,
-                cy: 110,
+                cy: 140,
                 arcLabel: getArcLabel,
               },
             ]}
@@ -75,7 +76,6 @@ export default function SentimentInfo(props) {
                 fontWeight: "bold",
               },
             }}
-            height={225}
             slotProps={{
               legend: { hidden: true },
             }}
@@ -84,7 +84,7 @@ export default function SentimentInfo(props) {
         <Grid sx={{ width: "60%", display: "flex", flexDirection: "column", p: 0.5 }}>
           <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <Grid sx={{ pl: 1, pr: 2, pt: 1 }}>
-              <BsEmojiSmileFill color="#5dc2b1" fontSize={"3rem"} />
+              <BsEmojiSmileFill color="#5dc2b1" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
               <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
@@ -98,7 +98,7 @@ export default function SentimentInfo(props) {
           <Divider />
           <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
             <Grid sx={{ pl: 1, pr: 2, pt: 1 }}>
-              <BsFillEmojiSurpriseFill color="#f0d689" fontSize={"3rem"} />
+              <BsFillEmojiSurpriseFill color="#f0d689" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
               <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
@@ -111,8 +111,8 @@ export default function SentimentInfo(props) {
           </Grid>
           <Divider />
           <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-            <Grid sx={{ pl: 1, pr: 2, pt: 1 }}>
-              <BsEmojiFrownFill color="#ed9568" fontSize={"3rem"} />
+            <Grid sx={{ pl: 1, pr: 2, pt: 0.5 }}>
+              <BsEmojiFrownFill color="#ed9568" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
               <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
