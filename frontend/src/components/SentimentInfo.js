@@ -46,7 +46,6 @@ const companyNames = [
 ];
 
 export default function SentimentInfo(props) {
-  console.log('company: ', companyNames[props.companyId])
   return (
     <>
       <Box sx={{ bgcolor: "#b0e2e8", p: 0.3, pl: 1, fontFamily: "GmarketSansMedium", display: "flex", alignItems: "center" }}>

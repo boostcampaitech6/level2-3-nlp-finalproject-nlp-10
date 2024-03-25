@@ -85,8 +85,6 @@ export default function Main() {
         )}
         {value == "1" && (
           <CompanyInfo
-            startDate={startDate}
-            endDate={endDate}
             company={company}
             confirm={confirm}
           />
