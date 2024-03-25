@@ -3,7 +3,8 @@ from sqlalchemy import select, and_, func
 from schema.response import TopicImageURLResponse
 from fastapi import Depends
 from database.connection import get_db
-from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic, Topic_image, Summary, News_company, Company_price_info
+from database.orm import News, Sentiment, Topic, Topic_summary, Company, News_topic, Topic_image, Summary, News_company, \
+    Company_price_info, Economy_price_info, Company_Close_price
 from typing import List 
 
 class Repository_jh:
@@ -110,6 +111,20 @@ class Repository_jh:
                 Topic.company_id == company_id
             )).all()
        
+    # 기업의 최신 종가(close) 가격 불러오기
+    def get_company_stock_close_price_recent_90day(self, company_id):
+
+        # 동적으로 칼럼 이름 생성 (예: 'col_48')
+        column_name = f'col_{company_id}'
+        
+        # getattr를 사용하여 모델에서 해당 컬럼 찾기
+        target_column = getattr(Company_Close_price, column_name, None)
+        
+        return self.session.query(Company_Close_price.date, target_column)\
+            .order_by(Company_Close_price.date.desc()).limit(90).all() 
+        
+
+
     #################3 기업으로 최신 뉴스 정보 불러오기
         
     # # 기업으로 뉴스들 요약 불러오기    
@@ -253,6 +268,11 @@ class Repository_jh:
             return TopicImageURLResponse(image_url=topic_image.image_url)
         else:
             return TopicImageURLResponse()
+
+
+ # 가장 최근 economy_price_info 불러오기        
+    def get_economy_price_info_recent(self) -> Economy_price_info:
+        return self.session.query(Economy_price_info).order_by(Economy_price_info.date.desc()).first() 
 
         
     # 테스트 코드

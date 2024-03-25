@@ -1,6 +1,6 @@
 import asyncio
 from crawling import RestClient, NewsCrawler
-
+from preprocessing import Denoiser
 from collections import Counter
 from functools import reduce
 
@@ -25,6 +25,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, BartForConditionalGeneration, PreTrainedTokenizerFast
 from sentence_transformers import SentenceTransformer
 import hdbscan
+from sklearn.cluster import DBSCAN
 
 def fix_seed(seed = 42):
     random.seed(seed) # python random seed 고정
@@ -44,6 +45,7 @@ class Engine:
             'port': int(db_port)  # MySQL 기본 포트
         }
         
+        self.denoiser = Denoiser()
         # topic_code에 사용되는 변수. 삼성전자_{topic_n}_0, 삼성전자_{topic_n}_1, 삼성전자_{topic_n}_2, ...   
         self.topic_n = topic_n
         
@@ -209,7 +211,7 @@ class Engine:
         
         # NEWS 요약 데이터 생성
         summary_info = self.preprocess_summary(news_data=news_data, 
-                                               pretrained_model_name_or_path="EbanLee/kobart-summary-v2")
+                                               pretrained_model_name_or_path="EbanLee/kobart-summary-v3")
         logger.info(f"NEWS {table_name} Done")
         
         # SUMMARY TABLE에 데이터 입력
@@ -323,7 +325,7 @@ class Engine:
         logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
         
         
-    def fill_topic_summary(self):
+    def fill_topic_summary_before(self):
         table_name = 'TOPIC_SUMMARY'
         start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
         logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
@@ -358,8 +360,35 @@ class Engine:
                                description=f'INSERT {table_name} TABLES')
     
         logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
-        
     
+    
+    def fill_topic_summary(self):
+        table_name = 'TOPIC_SUMMARY'
+        start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
+        logger.info(f"INSERT {table_name} TABLE START : {start_time} ~ {end_time}")
+        
+        topic_data = self.select_data_from_db(query = f"SELECT * FROM {self.db_config['database']}.TOPIC WHERE startdate BETWEEN '{start_time}' AND '{end_time}';",
+                           description='SELECT TOPIC TABLE')
+        
+        news_summary_data = self.select_data_from_db(query = f"""SELECT n.news_id, n.date, n.title, n.contents, s.summary_text
+                                                        FROM {self.db_config['database']}.NEWS n
+                                                        INNER JOIN {self.db_config['database']}.SUMMARY s ON n.news_id = s.news_id
+                                                        WHERE n.date BETWEEN '{start_time}' AND '{end_time}';""",
+                           description='MERGE NEWS, SUMMARY TABLE')
+        logger.info(f"{table_name} SELECT DONE")
+        
+        topic_summary_info = self.preprocess_topic_summary_topic_summary(topic_data, news_summary_data, pretrained_model_name_or_path="EbanLee/kobart-summary-v3")
+        topic_summary_info = self.preprocess_topic_summary_topic_title_summary(topic_summary_info, pretrained_model_name_or_path="EbanLee/kobart-title")
+        logger.info(f"{table_name} PREPROCESS DONE")
+        
+        self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} (topic_id, topic_title_summary, topic_summary) \
+                                                VALUES (%(topic_id)s, %(topic_title_summary)s, %(topic_summary)s)",
+                               data=topic_summary_info,
+                               description=f'INSERT {table_name} TABLES')
+    
+        logger.info(f"INSERT {table_name} TABLE END : {start_time} ~ {end_time}")
+        
+        
     def fill_topic_image(self):
         table_name = 'TOPIC_IMAGE'
         start_time, end_time = self.topic_start_time.strftime('%Y-%m-%d %H:%M:%S'), self.topic_end_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -447,7 +476,7 @@ class Engine:
         return news_company_info
     
     
-    def preprocess_summary(self, news_data, pretrained_model_name_or_path="EbanLee/kobart-summary-v2"):
+    def preprocess_summary(self, news_data, pretrained_model_name_or_path="EbanLee/kobart-summary-v3"):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # tokenizer 및 모델 로드
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
@@ -458,9 +487,25 @@ class Engine:
         with torch.no_grad():
             for i in tqdm(range((len(news_data) // 30) + 1), desc='SUMMARY WORKING'):
                 s_i, e_i = i*30, min((i+1)*30, len(news_data)+1)
-                news_id_list = [data['news_id'] for data in news_data[s_i:e_i]]
-                contents_list = [data['contents'] for data in news_data[s_i:e_i]]
-
+                
+                news_id_list, contents_list, no_text_ids = [], [], dict()
+                for i, data in enumerate(news_data[s_i:e_i]):
+                    # contents 부분 전처리
+                    contents = self.denoiser.denoise_summary(data['contents'])
+                    tokenized_length = len(tokenizer.tokenize(contents))
+                    
+                    # 토크나이징 이후 최소 길이를 넘는지 확인
+                    if tokenized_length < 62: # min_length(12) + 50
+                        contents = f"{data['title']}. {contents}"
+                    
+                        # 제목을 붙인 이후에도 최소 길이를 넘지 못하면 요약을 수행하지 않고 제목을 입력
+                        if len(tokenizer.tokenize(contents)) < 62:
+                            no_text_ids[data['news_id']] = self.denoiser.denoise_summary(data['title'])
+                    
+                    contents_list.append(contents)
+                    news_id_list.append(data['news_id'])
+                
+                # 데이터가 없다면 종료. 
                 if len(contents_list) == 0:
                     break
                 
@@ -471,18 +516,24 @@ class Engine:
                                                     truncation=True, 
                                                     max_length=1026).to(device)
 
-                outputs = model.generate(inputs['input_ids'], 
+                outputs = model.generate(input_ids = inputs['input_ids'],
+                                         attention_mask = inputs['attention_mask'], 
                                             bos_token_id=tokenizer.bos_token_id,
                                             eos_token_id=tokenizer.eos_token_id,
-                                            length_penalty=2.0,
+                                            length_penalty=1.0,
                                             max_length=300,
-                                            min_length=50,
-                                            num_beams=6,).to("cpu")
+                                            min_length=12,
+                                            num_beams=6,
+                                            repetition_penalty = 1.5
+                                            ).to("cpu")
                 
                 decoded_output = tokenizer.batch_decode(outputs, skip_special_tokens=True)
                 
+                # 글이 없는(매우 짧은) 뉴스는 요약문 대신 제목으로 대체
                 for news_id, summary_text in zip(news_id_list, decoded_output):
-                    summary_info.append({'news_id' : news_id, 'summary_text':summary_text})
+                    summary_info.append({'news_id' : news_id, 
+                                         'summary_text': self.denoiser.strip_quotes(no_text_ids[news_id]) \
+                                             if news_id in no_text_ids else self.denoiser.strip_quotes(summary_text)})
 
         # GPU 메모리 정리
         torch.cuda.empty_cache()
@@ -550,7 +601,11 @@ class Engine:
                 
             else:
                 embedding = df_stock['embedding'].tolist()
-                df_clustering, topic_counter = self.clustering(df_stock, embedding, min_cluster_size=2, min_samples=1, method='leaf')
+                # 전체 종목은 hdbscan을 개별 종목은 dbscan을 적용
+                if stock == '전체':
+                    df_clustering, topic_counter = self.hdbscan_clustering(df_stock, embedding, min_cluster_size=3, min_samples=3, method='leaf')
+                else:
+                    df_clustering, topic_counter = self.dbscan_clustering(df_stock, embedding, eps=0.2, min_samples=2)
                 
                 # topic 별로 내용 추출 
                 for topic in topic_counter:
@@ -576,10 +631,76 @@ class Engine:
             topic_id, news_id_lst = info['topic_id'], info['news_id_list'].split(',')
             news_topic_lst.extend([{'news_id' : news_id, 'topic_id' : topic_id} for news_id in news_id_lst])
         return news_topic_lst
+        
     
+    
+    def preprocess_topic_summary_topic_summary(self, topic_data, news_summary_data, pretrained_model_name_or_path="EbanLee/kobart-summary-v3"):    
+        # topic_summary 생성을 위한 준비 
+        df_news_summary = pd.DataFrame(news_summary_data)
+        new_info =  [{'topic_id' : data['topic_id'], 'news_id_list' : list(map(int, data['news_id_list'].split(',')))} for data in topic_data]
+        summary_concat_info = []
+
+        for info in new_info:
+            random_values = random.sample(info['news_id_list'], min(4, len(info['news_id_list'])))
+            summaries = list(df_news_summary[df_news_summary['news_id'].apply(lambda x : x in random_values)]['summary_text'])[::-1]
+            summaries = reduce(lambda acc, cur: acc + ' ' + cur, summaries)
+            summary_concat_info.append({'topic_id' : info['topic_id'], 'summary_concat' : summaries})
+        
+        
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # tokenizer 및 모델 로드
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
+        model = BartForConditionalGeneration.from_pretrained(pretrained_model_name_or_path)
+        model.to(device)
+        model.eval()
+        topic_summary_info = [] 
+        with torch.no_grad():
+            for i in tqdm(range((len(summary_concat_info) // 30) + 1), desc='TOPIC SUMMARY WORKING'):
+                s_i, e_i = i*30, min((i+1)*30, len(summary_concat_info)+1)
+                
+                news_id_list, contents_list = [], []
+                for i, data in enumerate(summary_concat_info[s_i:e_i]):
+                    # contents 부분 전처리
+                    contents = engine.denoiser.denoise_summary(data['summary_concat'])                 
+                    contents_list.append(contents)
+                    news_id_list.append(data['topic_id'])
+                
+                # 데이터가 없다면 종료. 
+                if len(contents_list) == 0:
+                    break
+                
+                # input data encoding
+                inputs = tokenizer.batch_encode_plus(contents_list, 
+                                                    return_tensors="pt", 
+                                                    padding=True, 
+                                                    truncation=True, 
+                                                    max_length=1026).to(device)
+                
+                outputs = model.generate(input_ids = inputs['input_ids'],
+                                        attention_mask = inputs['attention_mask'], 
+                                            bos_token_id=tokenizer.bos_token_id,
+                                            eos_token_id=tokenizer.eos_token_id,
+                                            length_penalty=1.0,
+                                            max_length=300,
+                                            min_length=12,
+                                            num_beams=6,
+                                            repetition_penalty = 1.5
+                                            ).to("cpu")
+                
+                decoded_output = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+                
+                # 글이 없는(매우 짧은) 뉴스는 요약문 대신 제목으로 대체
+                for news_id, summary_text in zip(news_id_list, decoded_output):
+                    topic_summary_info.append({'topic_id' : news_id, 
+                                        'topic_summary': self.denoiser.strip_quotes(summary_text)})
+        # GPU 메모리 정리
+        torch.cuda.empty_cache()
+        
+        return topic_summary_info
+                
     
     # [TODO] topic_title, topic_summary는 추후 수정 가능
-    def preprocess_topic_summary(self, merge_data, pretrained_model_name_or_path="EbanLee/kobart-title"):
+    def preprocess_topic_summary_topic_title_summary(self, merge_data, pretrained_model_name_or_path="EbanLee/kobart-title"):
         topic_summary_info = []
         
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -589,7 +710,7 @@ class Engine:
         model.eval()
         
         for ts_data in tqdm(merge_data, desc='TOPIC_SUMMARY WORKING'):
-            input_text = ts_data['contents']
+            input_text = ts_data['topic_summary']
             input_ids = tokenizer.encode(input_text, 
                                          return_tensors="pt", 
                                          padding=True, 
@@ -609,8 +730,8 @@ class Engine:
             topic_title_summary = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
             
             topic_summary_info.append({'topic_id' : ts_data['topic_id'], 
-                                    'topic_title_summary' : topic_title_summary,
-                                    'topic_summary' : ts_data['summary_text']})
+                                    'topic_title_summary' : self.denoiser.strip_quotes(topic_title_summary),
+                                    'topic_summary' : ts_data['topic_summary']})
         # GPU 메모리 정리
         torch.cuda.empty_cache()
         return topic_summary_info
@@ -633,7 +754,7 @@ class Engine:
         return df_merge
 
     # HDBSCAN 실행
-    def clustering(self, corpus, corpus_embeddings, min_cluster_size=2, min_samples=1, method='leaf'):
+    def hdbscan_clustering(self, corpus, corpus_embeddings, min_cluster_size=3, min_samples=3, method='leaf'):
         cluster = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size,
                                 min_samples=min_samples,
                                 metric='euclidean',
@@ -644,6 +765,14 @@ class Engine:
         docs_df = corpus.copy()
         docs_df['Topic'] = cluster.labels_    
         return docs_df, Counter(cluster.labels_)
+
+    def dbscan_clustering(self, corpus, corpus_embeddings, eps=0.3, min_samples=2):
+        cluster = DBSCAN(eps=eps, min_samples=min_samples, metric='cosine')
+        result = cluster.fit_predict(corpus_embeddings)
+        
+        docs_df = corpus.copy()
+        docs_df['Topic'] = result
+        return docs_df, Counter(result)
 
 
     async def crawling_news(self):
@@ -718,14 +847,16 @@ if __name__ == "__main__":
     fix_seed()
     db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
     
+
     engine = Engine(db_user=db_user, 
-                                db_password = db_password, 
-                                db_host = db_host, 
-                                topic_n = 0, 
-                                db_database = db_database, 
-                                db_port = db_port, 
-                                period = args.period,
-                                day_diff = args.day_diff)
-        
+                            db_password = db_password, 
+                            db_host = db_host, 
+                            topic_n = 0, 
+                            db_database = db_database, 
+                            db_port = db_port, 
+                            period = args.period,
+                            day_diff = args.day_diff)
+
+
     asyncio.run(engine.fill())
     

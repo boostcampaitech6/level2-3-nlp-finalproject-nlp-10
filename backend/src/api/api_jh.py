@@ -5,7 +5,7 @@ from schema.dto import Topic_title_dto, Topic_titles_dto
 from service.service_jh import Service_jh
 from repository.repository_jh import Repository_jh
 from database.orm import Topic, Topic_summary, News_topic, News, Summary, Sentiment
-from typing import List 
+from typing import List, Tuple
 from collections import Counter
 from starlette.middleware.cors import CORSMiddleware
 from datetime import date
@@ -225,6 +225,34 @@ def get_company_info_by_company(
     company_info : int = repo.get_company_info_by_company(company_id)
         
     return company_info
+
+
+############3 가장 최근 경제 지표 값들 (economy_price_info) 가져오기
+@router.get("/get-economy-info")
+def get_economy_info_recent(   
+    repo: Repository_jh = Depends()
+) : 
+    # 요약 정보 불러오기
+    economy_info = repo.get_economy_price_info_recent()
+        
+    return economy_info 
+
+###############  # 기업의 최신 종가(close) 가격 불러오기 최근 90개
+@router.get("/get-company-close-price-90", response_model=Tuple[List[str], List[int]])
+def get_company_close_recent_90(
+    company_id: int,     
+    repo: Repository_jh = Depends()
+) -> Tuple[List[str], List[int]]: 
+    # 요약 정보 불러오기
+    company_close_90 = repo.get_company_stock_close_price_recent_90day(company_id)
+    
+    # 날짜와 종가(close price)를 각각 분리하여 리스트 생성
+    dates = [item[0].isoformat() for item in company_close_90]  
+    close_prices = [item[1] for item in company_close_90]
+    
+    # 날짜 리스트와 종가 리스트를 튜플로 묶어 반환
+    return dates, close_prices
+
 
 
 #############################################3
