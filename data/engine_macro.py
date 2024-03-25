@@ -1,7 +1,7 @@
 import FinanceDataReader as fdr
 from collections import Counter
 from functools import reduce
-from pykrx import stock
+from pykrx import stock, bond
 
 import time
 import random
@@ -123,7 +123,20 @@ class MacroEngine:
                                description=f'INSERT {table_name} TABLES')
         logger.info(f"INSERT {table_name} TABLE DONE : {self.today}")
         
-        return company_price_info_info
+    
+    def fill_economy_price_info(self):
+        table_name = 'ECONOMY_PRICE_INFO'
+        logger.info(f"INSERT {table_name} TABLE START : {self.today}")
+        
+        economy_price_info_info = self.preprocess_economy_price_info()
+        logger.info(f"{table_name} Preprocessing Done")
+        
+        columns = ['date' ,'코스피' ,'코스피200' ,'코스닥' ,'금' ,'환율_원화' ,'환율_유로화' ,'다우존스' ,'나스닥' ,'SnP500' ,'WTI' ,'비트코인' ,'한국채권_5년물' ,'한국채권_10년물' ,'미국채권_5년물' ,'미국채권_10년물']        # ECONOMY_PRICE_INFO 테이블 입력
+        self.insert_data_to_db(query=f"INSERT INTO {self.db_config['database']}.{table_name} ({reduce(lambda acc, cur: acc + f', `{cur}`', columns)}) VALUES (%(date)s{reduce(lambda acc, cur: str(acc) + f', %({cur})s', columns[1:], '')})",
+                               data=economy_price_info_info,
+                               description=f'INSERT {table_name} TABLES')
+        logger.info(f"INSERT {table_name} TABLE DONE : {self.today}")
+        
     
     
     def preprocess_company_price_info(self, company_price_info_data, columns):
@@ -174,9 +187,33 @@ class MacroEngine:
         return [company_close_info]
     
     
+    def preprocess_economy_price_info(self):
+        day_diff6 = (datetime.strptime(self.today, '%Y-%m-%d') - timedelta(days=6)).strftime('%Y-%m-%d')
+        economy_price_info_info = {'date' : self.today}
+        
+        column_ticker = [('코스피', 'KS11'), ('코스피200', 'KS200'), ('코스닥', 'KQ11'), ('금', 'GC=F'), ('환율_원화', 'USD/KRW'), 
+                         ('환율_유로화', 'USD/EUR'), ('다우존스', 'DJI'), ('나스닥', 'IXIC'), ('SnP500', 'S&P500'), ('WTI', 'CL=F'), ('비트코인', 'BTC-KRW'),
+                         ('미국채권_5년물', 'US5YT'), ('미국채권_10년물', 'US10YT')]
+        for key, ticker in column_ticker:
+            try:
+                value = fdr.DataReader(ticker, day_diff6, self.today)['Close'].fillna(-100).values[-1]
+            except:
+                value = -100
+            economy_price_info_info[key] = value
+        
+        date_str_nodash = self.today.replace('-', '')
+        for key, ticker in [('한국채권_5년물', '국고채 5년'), ('한국채권_10년물', '국고채 10년')]:
+            try:
+                value = bond.get_otc_treasury_yields(date_str_nodash).loc[ticker, '수익률'] # 5년 만기 한국 국채 수익률
+            except:
+                value = -100
+            economy_price_info_info[key] = value
+        return [economy_price_info_info]
+    
     def fill(self):
         self.fill_company_close()
         self.fill_company_price_info()
+        self.fill_economy_price_info()
     
 if __name__ == '__main__':
     
@@ -185,5 +222,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     db_user, db_password, db_host, db_database, db_port = os.getenv('DB_USER'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_DATABASE'), os.getenv('DB_PORT')
-    macro_engine = MacroEngine(db_user, db_password, db_host, db_database, db_port, day_diff = args.day_diff)
+    macro_engine = MacroEngine(db_user, db_password, db_host, db_database, db_port, day_diff = i)
+    macro_engine.fill_economy_price_info()
+    
     macro_engine.fill()
