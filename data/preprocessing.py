@@ -1,5 +1,5 @@
 import re
-from konlpy.tag import Okt
+import hanja
 from soynlp.normalizer import *
 
 import pandas as pd
@@ -9,7 +9,15 @@ class Denoiser:
     def __init__(self, **kwargs):
         super(Denoiser, self).__init__(**kwargs)
     
-    
+    # 문장 양끝 따옴표 제거
+    def strip_quotes(self, text):
+        if text[0] == '"' and text[-1] == '"':
+            text = text.strip('"')
+        
+        if text[0] == "'" and text[-1] == "'":
+            text = text.strip("'")
+        return text
+        
     # 공백 제거
     def remove_space(self, text):
         text = re.sub(r'\s+', ' ', text)
@@ -90,6 +98,18 @@ class Denoiser:
         text = re.sub(r'[一-龥]+', '', text)
         return text
     
+    def remove_sasul_sockbo(self, text):
+        patterns = ['\[사설\]', '<사설>', '\(사설\)', '\[속보\]', '<속보>', '\(속보\)']
+        replace_pattern = re.compile('|'.join(patterns))
+        text = replace_pattern.sub(' ', text)
+        return text
+    
+    def remove_points(self, text):
+        text = re.sub(r'[.]{2,}', '.', text) 
+        text = re.sub(r'[,]{2,}', ',', text) 
+        text = re.sub(r'[.,]{2,}', '.', text) 
+        return text
+    
     
     # 내용 전처리
     def denoise(self, text):       
@@ -108,3 +128,15 @@ class Denoiser:
             text = self.remove_japanese_chinese(text)
 
         return text
+    
+    def denoise_summary(self, text):
+        text = self.remove_email(text) #이메일
+        text = self.remove_date(text)
+        text = self.remove_url(text)
+        text = self.remove_sasul_sockbo(text)
+        text = self.remove_points(text)
+        text = self.remove_space(text)
+        text = hanja.translate(text, 'combination-text')
+        
+        return text
+        
