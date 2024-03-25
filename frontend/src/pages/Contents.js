@@ -90,6 +90,7 @@ export default function Main() {
             endDate={endDate}
             company={company}
             confirm={confirm}
+            tabNum={value}
           />
         )}
         {value == "2" && <Report />}

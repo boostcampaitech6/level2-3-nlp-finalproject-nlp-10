@@ -2,7 +2,12 @@
 
 @import url('//fonts.googleapis.com/earlyaccess/notosanskr.css');
 
-@import url('https://fonts.googleapis.com/css2?family=Orbit&display=swap');
+@font-face {
+  font-family: 'SebangGothic';
+  src: url('https://cdn.jsdelivr.net/gh/webfontworld/sebang/SebangGothicRegular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
 
 @font-face {
   font-family: 'GmarketSansMedium';
