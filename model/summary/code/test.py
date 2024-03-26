@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, set_seed
+from transformers import AutoTokenizer, set_seed, BartForConditionalGeneration
 import torch
 import pandas as pd
 import numpy as np
@@ -26,23 +26,24 @@ no_repeat_ngram_size = 15
 
 context = test_data['contents']
 
-model_name = "EbanLee/kobart-summary-v2"
+model_name1 = "EbanLee/kobart-summary-v2"
+model_name2 = "EbanLee/kobart-summary-v3"
 
 tokenizer = AutoTokenizer.from_pretrained("../save_tokenizer")
 # model = BartForConditionalGeneration.from_pretrained(model_name).to("cuda")
-model = torch.load('../trained_model_1/model.pt')
-model2 =torch.load('../trained_model/model.pt')
+model1 = BartForConditionalGeneration.from_pretrained(model_name1)
+model2 = BartForConditionalGeneration.from_pretrained(model_name2)
 # T5_model = AutoModelForSeq2SeqLM.from_pretrained('eenzeenee/t5-base-korean-summarization')
 # T5_tokenizer = AutoTokenizer.from_pretrained('eenzeenee/t5-base-korean-summarization')
 
 torch.cuda.empty_cache()
 
 with torch.no_grad():
-    model.eval()
+    model1.eval()
     model2.eval()
     # T5_model.eval()
   
-    model.to("cuda")
+    model1.to("cuda")
     model2.to("cuda")
     # T5_model.to("cuda")
 
@@ -54,7 +55,7 @@ with torch.no_grad():
         #input_ids = tokenizer.encode(context[i], return_tensors="pt", padding="max_length", truncation=True, max_length=1026)
         inputs = tokenizer(context[i], return_tensors="pt", padding="max_length", truncation=True, max_length=1026)
 
-        summary_text_ids = model.generate(
+        summary_text_ids = model1.generate(
         input_ids=inputs['input_ids'].to("cuda"),
         attention_mask=inputs['attention_mask'].to("cuda"),
         bos_token_id=tokenizer.bos_token_id,
@@ -112,7 +113,7 @@ with torch.no_grad():
     elapsed_time1 = time.time() - start_time
     print(f"duration : {elapsed_time1}")
     print('\n\n')
-    model.to("cpu")
+    model1.to("cpu")
 #-------------------------------------------------------------------------------------------------
     # start_time = time.time()
     # for i in range(1000,1100):

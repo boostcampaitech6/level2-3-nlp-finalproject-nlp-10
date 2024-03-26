@@ -20,7 +20,7 @@ parser.add_argument("--make_file", default='False', type=str, help='make topic?'
 args = parser.parse_args()
 
 # HDBSCAN 실행
-def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=2, min_samples=5, method='eom'):
+def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=2, min_samples=None, method='eom'):
     cluster = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size,
                             min_samples=min_samples,
                             metric='euclidean',
@@ -89,7 +89,7 @@ if args.make_cluster == 'True' or args.make_cluster == 'true':   #토픽숫자 �
 
         while(True):
             c_algo = input('클러스터링 알고리즘 선택(\'hdb\' : HDBSCAN, \'db\' : DBSCAN) :')
-            if c_algo == 'hdb' or c_algo == 'HDB' or c_algo == 'db' or c_algo == 'DB':
+            if c_algo == 'hdb' or c_algo == 'HDB' or c_algo == 'db' or c_algo == 'DB': 
                 break
             else: print(f'다시 입력해주세요.')
         
@@ -99,13 +99,13 @@ if args.make_cluster == 'True' or args.make_cluster == 'true':   #토픽숫자 �
         if c_algo=='hdb' or c_algo=='HDB':   #뉴스 많을 때
             docs_df, result = hdbscan_process(sub_dataset, 
                                     embeddings,
-                                    method='leaf',    #가장 높은 밀도
-                                    min_cluster_size=2,
-                                    min_samples=5,
+                                    #method='leaf',    #가장 높은 밀도
+                                    min_cluster_size=5,
+                                    #min_samples=2,
                                     )
             
         elif c_algo=='db' or c_algo=='DB':  #뉴스 적을 때
-            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.3, min_samples=2)
+            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.27, min_samples=2)
 
         elapsed_time = time.time() - start_time
         print(f'duration : {elapsed_time}s\n')
@@ -149,7 +149,7 @@ if args.make_cluster == 'True' or args.make_cluster == 'true':   #토픽숫자 �
 
 else:   #토픽숫자 달려있는 파일 불러와서 확인할 때
     print("read_TopicData")
-    docs_df = pd.read_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
+    docs_df = pd.read_csv(os.path.join(add_topic_path, f'add_Topic_add_embedding_Sum_FIN_NEWS_SUMMARY_None.csv'))
     cluster_labels = Counter(docs_df['Topic'].to_list())
     embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), docs_df['embedding'].tolist()))
 
@@ -158,4 +158,6 @@ else:   #토픽숫자 달려있는 파일 불러와서 확인할 때
     print(f'\nstart ~ end : {times[0]} ~ {times[-1]}')
     print(f'num_docs : {len(embeddings)}')
 
+    print(docs_df[['title', 'summary', 'Topic']].head(15))
+    
     check_cluster(docs_df)

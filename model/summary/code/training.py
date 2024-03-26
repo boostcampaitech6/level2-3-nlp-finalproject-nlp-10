@@ -28,10 +28,10 @@ def training(args, model, tokenizer, device):
     train_data = pd.DataFrame(columns = ['passage', 'summary'])
 
     if load_book_data==True:
-        train_data1 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset1"))
-        train_data2 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset2"))
-        train_data3 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset3"))
-        train_data4 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset4"))
+        train_data1 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset1"))
+        train_data2 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset2"))
+        train_data3 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset3"))
+        train_data4 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset4"))
         train_data = pd.concat([train_data, train_data1, train_data2, train_data3, train_data4], ignore_index=True)
         print(f"book_data_length = {len(train_data1) + len(train_data2) + len(train_data3) + len(train_data4)}")
     
@@ -43,7 +43,7 @@ def training(args, model, tokenizer, device):
         print(f"doc_data_length = {len(train_data1) + len(train_data2) + len(train_data3)}")
     
     if load_report_data == True:        
-        train_data1 = load_report_dataset(report_valid_dataset_path)
+        train_data1 = load_report_dataset(report_train_dataset_path)
         train_data = pd.concat([train_data, train_data1], ignore_index=True)
         print(f"report_data_length = {len(train_data1)}")
 
