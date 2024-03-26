@@ -1,6 +1,6 @@
-import React from 'react'
-import { PieChart, pieArcLabelClasses } from '@mui/x-charts/PieChart';
-import { Box, Grid, Divider, List, ListItem, } from '@mui/material';
+import React from "react";
+import { PieChart, pieArcLabelClasses } from "@mui/x-charts/PieChart";
+import { Box, Grid, Divider, List, ListItem } from "@mui/material";
 import dayjs from "dayjs";
 import { FaCheckSquare } from "react-icons/fa";
 import {
@@ -11,8 +11,7 @@ import {
 
 import "../css/font.css";
 
-
-const date = dayjs().format('YYYY.MM.DD')
+const date = dayjs().format("YYYY.MM.DD");
 
 const getArcLabel = (params) => {
   return `${params.value}건`;
@@ -41,19 +40,33 @@ const companyNames = [
 
 export default function SentimentInfo(props) {
   var data = [
-    { label: '긍정', value: props.positiveNum, color: '#5dc2b1' },
-    { label: '중립', value: props.neutralNum, color: '#f0d689' },
-    { label: '부정', value: props.NegativeNum, color: '#ed9568' },
+    { label: "긍정", value: props.positiveNum, color: "#5dc2b1" },
+    { label: "중립", value: props.neutralNum, color: "#f0d689" },
+    { label: "부정", value: props.NegativeNum, color: "#ed9568" },
   ];
 
-  data = data.filter((sentiment) => sentiment.value)
+  data = data.filter((sentiment) => sentiment.value);
 
   return (
     <>
-      <Box sx={{ bgcolor: "#b0e2e8", p: 0.3, pl: 1, fontFamily: "GmarketSansMedium", display: "flex", alignItems: "center" }}>
-        <FaCheckSquare /> &nbsp; {props.companyId ? companyNames[props.companyId - 48] : "삼성전자"} {date} 인식 체크
+      <Box
+        sx={{
+          bgcolor: "#b0e2e8",
+          p: 0.3,
+          pl: 1,
+          fontFamily: "GmarketSansMedium",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <FaCheckSquare /> &nbsp;{" "}
+        {props.companyId ? companyNames[props.companyId - 48] : "삼성전자"}{" "}
+        {date} 인식 체크
       </Box>
-      <Grid container sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+      <Grid
+        container
+        sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+      >
         <Grid sx={{ width: "40%", height: "38vh" }}>
           <PieChart
             series={[
@@ -81,50 +94,99 @@ export default function SentimentInfo(props) {
             }}
           />
         </Grid>
-        <Grid sx={{ width: "60%", display: "flex", flexDirection: "column", p: 0.5 }}>
-          <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+        <Grid
+          sx={{
+            width: "60%",
+            display: "flex",
+            flexDirection: "column",
+            p: 0.5,
+          }}
+        >
+          <Grid
+            sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+          >
             <Grid sx={{ pl: 1, pr: 2, pt: 1 }}>
               <BsEmojiSmileFill color="#5dc2b1" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                긍정 토픽1
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[2][0]}
               </ListItem>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                긍정 토픽2
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[2][1]}
               </ListItem>
             </List>
           </Grid>
           <Divider />
-          <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+          <Grid
+            sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+          >
             <Grid sx={{ pl: 1, pr: 2, pt: 1 }}>
               <BsFillEmojiSurpriseFill color="#f0d689" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                중립 토픽1
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[1][0]}
               </ListItem>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                중립 토픽2
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[1][1]}
               </ListItem>
             </List>
           </Grid>
           <Divider />
-          <Grid sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+          <Grid
+            sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}
+          >
             <Grid sx={{ pl: 1, pr: 2, pt: 0.5 }}>
               <BsEmojiFrownFill color="#ed9568" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                부정 토픽1
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[0][0]}
               </ListItem>
-              <ListItem sx={{ display: "list-item", p: 0.5, fontFamily: "Noto Sans KR" }}>
-                부정 토픽2
+              <ListItem
+                sx={{
+                  display: "list-item",
+                  p: 0.5,
+                  fontFamily: "Noto Sans KR",
+                }}
+              >
+                {props.sentimentNews[0][1]}
               </ListItem>
             </List>
           </Grid>
         </Grid>
       </Grid>
     </>
-  )
+  );
 }
