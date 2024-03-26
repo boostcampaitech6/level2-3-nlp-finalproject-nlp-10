@@ -27,11 +27,53 @@ function CompanyInfo({ company, confirm }) {
   const scrollToTop = () => {
     divRef.current.scroll({
       top: 0,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   };
 
+  const [sentimentCounts, setSentimentCounts] = useState({});
+  const [sentimentNews, setSentimentNews] = useState({
+    0: [],
+    1: [],
+    2: [],
+  });
   useEffect(() => {
+    function countSentiments(objects) {
+      const counts = {};
+      objects.forEach((obj) => {
+        const sentiment = obj.sentiment;
+        counts[sentiment] = (counts[sentiment] || 0) + 1;
+      });
+      return counts;
+    }
+    function compare(a, b) {
+      if (a.cnt < b.cnt) {
+        return -1;
+      }
+      if (a.cnt > b.cnt) {
+        return 1;
+      }
+      return 0;
+    }
+    function classifyBySentiment(data) {
+      const lis = {
+        0: [],
+        1: [],
+        2: [],
+      };
+
+      data.sort(compare);
+
+      data.forEach((obj) => {
+        const { sentiment, news_title } = obj;
+        if (obj.sentiment in [0, 1, 2]) {
+          lis[obj.sentiment].push(obj.news_title);
+        }
+      });
+
+      return lis;
+    }
+
     const company_id = 48;
     const fetchGetNews = async () => {
       try {
@@ -45,15 +87,27 @@ function CompanyInfo({ company, confirm }) {
             // JSON.stringify(params),
           }
         );
+        setSentimentCounts(countSentiments(response.data));
+        console.log("sentimentCounts", sentimentCounts);
+
+        setSentimentNews(classifyBySentiment(response.data));
+        console.log("SentimentNews", sentimentNews);
+
         console.log("news제목 요약 불러오기", response.data);
         setCnt(response.data.map((item) => item.cnt));
         setNewsId(response.data.map((item) => item.news_id));
         setNewsTitle(response.data.map((item) => item.news_title));
         setSummary(response.data.map((item) => item.summary));
         setSentiment(response.data.map((item) => item.sentiment));
-        setPositiveNum(response.data.filter((item) => item.sentiment === 2).length);
-        setNeutralNum(response.data.filter((item) => item.sentiment === 1).length);
-        setNegativeNum(response.data.filter((item) => item.sentiment === 0).length);
+        setPositiveNum(
+          response.data.filter((item) => item.sentiment === 2).length
+        );
+        setNeutralNum(
+          response.data.filter((item) => item.sentiment === 1).length
+        );
+        setNegativeNum(
+          response.data.filter((item) => item.sentiment === 0).length
+        );
       } catch (err) {
         console.log("news제목 요약 불러오기 에러");
       }
@@ -61,38 +115,42 @@ function CompanyInfo({ company, confirm }) {
 
     const fetchCompanyInfo = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/jh/get-company-info",
+        const response = await axios.get(
+          "http://localhost:8000/jh/get-company-info",
           {
             params: {
               company_id: company ? company : company_id,
-            }
+            },
           }
-        )
-        console.log("company info: ", response.data)
-        setCompanyInfo(response.data)
+        );
+        console.log("company info: ", response.data);
+        setCompanyInfo(response.data);
       } catch (err) {
-        console.log("company info fetch error")
+        console.log("company info fetch error");
       }
-    }
+    };
     fetchGetNews();
     fetchCompanyInfo();
-    setCompanyId(company)
-    scrollToTop()
+    setCompanyId(company);
+    scrollToTop();
   }, [confirm]);
 
   const [isBottom, setIsBottom] = useState(false);
   const [isTop, setIsTop] = useState(true);
 
   const handleScroll = (e) => {
-    if (Math.abs(e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop) <= 1) {
-      setIsBottom(true)
-      setIsTop(false)
+    if (
+      Math.abs(
+        e.target.scrollHeight - e.target.clientHeight - e.target.scrollTop
+      ) <= 1
+    ) {
+      setIsBottom(true);
+      setIsTop(false);
+    } else if (e.currentTarget.scrollTop === 0) {
+      setIsTop(true);
+      setIsBottom(false);
     }
-    else if (e.currentTarget.scrollTop === 0) {
-      setIsTop(true)
-      setIsBottom(false)
-    }
-  }
+  };
 
   return (
     <>
@@ -113,7 +171,16 @@ function CompanyInfo({ company, confirm }) {
             borderRight: { md: "1px solid lightgray" },
           }}
         >
-          <Grid onScroll={handleScroll} ref={divRef} sx={{ height: "72vh", overflowY: "scroll", "&-ms-overflow-style": "none", "&::-webkit-scrollbar": { display: "none" } }}>
+          <Grid
+            onScroll={handleScroll}
+            ref={divRef}
+            sx={{
+              height: "72vh",
+              overflowY: "scroll",
+              "&-ms-overflow-style": "none",
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
+          >
             <CompanyRecentNews
               cnt={cnt}
               newsId={newsId}
@@ -122,8 +189,19 @@ function CompanyInfo({ company, confirm }) {
               sentiment={sentiment}
             />
           </Grid>
-          <Grid sx={{ height: "3vh", display: "flex", justifyContent: "center", pt: 2, }}>
-            {isBottom && <Button onClick={() => scrollToTop()}><RxDoubleArrowUp color="#a1a1a1" fontSize={"1.3rem"} /></Button>}
+          <Grid
+            sx={{
+              height: "3vh",
+              display: "flex",
+              justifyContent: "center",
+              pt: 2,
+            }}
+          >
+            {isBottom && (
+              <Button onClick={() => scrollToTop()}>
+                <RxDoubleArrowUp color="#a1a1a1" fontSize={"1.3rem"} />
+              </Button>
+            )}
             {isTop && <RxDoubleArrowDown color="#a1a1a1" fontSize={"1.3rem"} />}
           </Grid>
         </Grid>
@@ -137,11 +215,8 @@ function CompanyInfo({ company, confirm }) {
             flexDirection: "column",
           }}
         >
-          <Grid >
-            <StockInfo
-              companyInfo={companyInfo}
-              companyId={companyId}
-            />
+          <Grid>
+            <StockInfo companyInfo={companyInfo} companyId={companyId} />
           </Grid>
           <Grid>
             <SentimentInfo
@@ -149,6 +224,8 @@ function CompanyInfo({ company, confirm }) {
               positiveNum={positiveNum}
               neutralNum={neutralNum}
               negativeNum={negativeNum}
+              sentimentCounts={sentimentCounts}
+              sentimentNews={sentimentNews}
             />
           </Grid>
         </Grid>
