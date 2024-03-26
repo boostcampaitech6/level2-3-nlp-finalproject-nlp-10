@@ -1,14 +1,10 @@
-from transformers import AutoTokenizer, BartForConditionalGeneration, AutoConfig, Trainer, TrainingArguments, AutoFeatureExtractor, set_seed, AdamW
+from transformers import AutoTokenizer, AdamW
 import torch
 import pandas as pd
-import numpy as np
 import os
-import random
-from argparse import ArgumentParser
 from tqdm import tqdm, trange
-import json
 from data_load import load_dataset, pd_load_dataset, load_report_dataset
-from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from make_dataset import make_dataset
 from rouge import Rouge
 
@@ -32,10 +28,10 @@ def training(args, model, tokenizer, device):
     train_data = pd.DataFrame(columns = ['passage', 'summary'])
 
     if load_book_data==True:
-        train_data1 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset1"))
-        train_data2 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset2"))
-        train_data3 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset3"))
-        train_data4 = load_dataset(os.path.join(book_valid_dataset_path, "valid_dataset4"))
+        train_data1 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset1"))
+        train_data2 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset2"))
+        train_data3 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset3"))
+        train_data4 = load_dataset(os.path.join(book_train_dataset_path, "training_dataset4"))
         train_data = pd.concat([train_data, train_data1, train_data2, train_data3, train_data4], ignore_index=True)
         print(f"book_data_length = {len(train_data1) + len(train_data2) + len(train_data3) + len(train_data4)}")
     
@@ -47,7 +43,7 @@ def training(args, model, tokenizer, device):
         print(f"doc_data_length = {len(train_data1) + len(train_data2) + len(train_data3)}")
     
     if load_report_data == True:        
-        train_data1 = load_report_dataset(report_valid_dataset_path)
+        train_data1 = load_report_dataset(report_train_dataset_path)
         train_data = pd.concat([train_data, train_data1], ignore_index=True)
         print(f"report_data_length = {len(train_data1)}")
 
@@ -122,29 +118,59 @@ def validation(model, model_name, device):
     
     rouge = Rouge()
     model.to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     context = valid_data['passage']
     target = valid_data['summary'].to_list()
     torch.cuda.empty_cache()
 
+    input_ids = []
+    attention_mask=[]
+    for c in tqdm(context.to_list()):
+        token = tokenizer(c, max_length=1026, truncation=True, padding="max_length")
+        input_ids.append(token['input_ids'])
+        attention_mask.append(token['attention_mask'])
+
+    dataset = TensorDataset(torch.tensor(input_ids), torch.tensor(attention_mask))
+    data_loader = DataLoader(dataset, shuffle=False, batch_size=32)
+
     with torch.no_grad():
         model.eval()
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
         outputs = []
-        for i in trange(len(context), desc='eval '):
-            token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+        for batch in tqdm(data_loader, desc='eval '):
             summary_text_ids = model.generate(
-                                    input_ids=token,
+                                    input_ids=batch[0].to(device),
+                                    attention_mask = batch[1].to(device),
                                     bos_token_id=tokenizer.bos_token_id,
                                     eos_token_id=tokenizer.eos_token_id,
-                                    length_penalty=2.0,
-                                    max_length=220,
+                                    length_penalty=1.5,
+                                    max_length=300,
                                     min_length=30,
                                     num_beams=6,
-                                    repetition_penalty=1.7,
+                                    repetition_penalty=1.5,
                                     ).to("cpu")
             
-            output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
-            outputs.append(output)
+            for out in summary_text_ids:
+                output = tokenizer.decode(out, skip_special_tokens=True)
+                outputs.append(output)
+
+    # with torch.no_grad():
+    #     model.eval()
+    #     outputs = []
+    #     for i in trange(len(context), desc='eval '):
+    #         token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+    #         summary_text_ids = model.generate(
+    #                                 input_ids=token,
+    #                                 bos_token_id=tokenizer.bos_token_id,
+    #                                 eos_token_id=tokenizer.eos_token_id,
+    #                                 length_penalty=1.5,
+    #                                 max_length=300,
+    #                                 min_length=30,
+    #                                 num_beams=6,
+    #                                 repetition_penalty=1.5,
+    #                                 ).to("cpu")
+            
+    #         output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
+    #         outputs.append(output)
         
     score = rouge.get_scores(outputs, target, avg=True)
     for k in score.keys():
