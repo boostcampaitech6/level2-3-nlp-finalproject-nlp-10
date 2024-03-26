@@ -100,7 +100,7 @@ if args.make_cluster == 'True' or args.make_cluster == 'true':   #토픽숫자 �
             docs_df, result = hdbscan_process(sub_dataset, 
                                     embeddings,
                                     #method='leaf',    #가장 높은 밀도
-                                    min_cluster_size=5,
+                                    min_cluster_size=2,
                                     #min_samples=2,
                                     )
             
