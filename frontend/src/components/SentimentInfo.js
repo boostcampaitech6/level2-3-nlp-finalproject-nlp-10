@@ -42,7 +42,7 @@ export default function SentimentInfo(props) {
   var data = [
     { label: "긍정", value: props.positiveNum, color: "#5dc2b1" },
     { label: "중립", value: props.neutralNum, color: "#f0d689" },
-    { label: "부정", value: props.NegativeNum, color: "#ed9568" },
+    { label: "부정", value: props.negativeNum, color: "#ed9568" },
   ];
 
   return (
@@ -65,7 +65,7 @@ export default function SentimentInfo(props) {
         container
         sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}
       >
-        <Grid sx={{ width: "40%", height: "38vh" }}>
+        <Grid sx={{ width: "32%", height: "38vh" }}>
           <PieChart
             series={[
               {
@@ -75,8 +75,8 @@ export default function SentimentInfo(props) {
                 paddingAngle: 1,
                 cornerRadius: 3,
                 data,
-                cx: 125,
-                cy: 140,
+                cx: 100,
+                cy: 130,
                 arcLabel: getArcLabel,
               },
             ]}
@@ -94,10 +94,10 @@ export default function SentimentInfo(props) {
         </Grid>
         <Grid
           sx={{
-            width: "60%",
+            width: "68%",
             display: "flex",
             flexDirection: "column",
-            p: 0.5,
+            p: 1,
           }}
         >
           <Grid
@@ -107,24 +107,18 @@ export default function SentimentInfo(props) {
               <BsEmojiSmileFill color="#5dc2b1" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[2][0]}
-              </ListItem>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[2][1]}
-              </ListItem>
+              {props.sentimentNews[2].slice(0, 2).map((news, idx) => (
+                <ListItem
+                  sx={{
+                    display: "list-item",
+                    p: 0,
+                    fontFamily: "Noto Sans KR",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  {news}
+                </ListItem>
+              ))}
             </List>
           </Grid>
           <Divider />
@@ -135,24 +129,18 @@ export default function SentimentInfo(props) {
               <BsFillEmojiSurpriseFill color="#f0d689" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[1][0]}
-              </ListItem>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[1][1]}
-              </ListItem>
+              {props.sentimentNews[1].slice(0, 2).map((news, idx) => (
+                <ListItem
+                  sx={{
+                    display: "list-item",
+                    p: 0,
+                    fontFamily: "Noto Sans KR",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  {news}
+                </ListItem>
+              ))}
             </List>
           </Grid>
           <Divider />
@@ -163,24 +151,18 @@ export default function SentimentInfo(props) {
               <BsEmojiFrownFill color="#ed9568" fontSize={"2.5rem"} />
             </Grid>
             <List sx={{ pl: 2.5, listStyleType: "square" }}>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[0][0]}
-              </ListItem>
-              <ListItem
-                sx={{
-                  display: "list-item",
-                  p: 0.5,
-                  fontFamily: "Noto Sans KR",
-                }}
-              >
-                {props.sentimentNews[0][1]}
-              </ListItem>
+              {props.sentimentNews[0].slice(0, 2).map((news, idx) => (
+                <ListItem
+                  sx={{
+                    display: "list-item",
+                    p: 0,
+                    fontFamily: "Noto Sans KR",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  {news}
+                </ListItem>
+              ))}
             </List>
           </Grid>
         </Grid>

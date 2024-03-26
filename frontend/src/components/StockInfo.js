@@ -29,9 +29,9 @@ const companyNames = [
 
 const date = dayjs().format('YYYY.MM.DD')
 export default function StockInfo(props) {
-  console.log("dict: ", props.closePriceInfo[1].map((price, idx) => { return { "date": new Date(props.closePriceInfo[0][idx].split('-')), "price": price } }))
+  // console.log("dict: ", props.closePriceInfo[1].map((price, idx) => { return { "date": new Date(props.closePriceInfo[0][idx].split('-')), "price": price } }))
   // const closePriceList = props.closePriceInfo[1] ? props.closePriceInfo[1].map((price, idx) => price) : []
-  const data = props.closePriceInfo[1].map((price, idx) => { return { "date": new Date(props.closePriceInfo[0][idx].split('-')), "price": price } }).reverse()
+  const data = props.closePriceInfo[1] ? props.closePriceInfo[1].map((price, idx) => { return { "date": new Date(props.closePriceInfo[0][idx].split('-')), "price": price } }).reverse() : []
   return (
     <>
       <Grid container sx={{ display: "flex", flexDirection: "row" }}>
