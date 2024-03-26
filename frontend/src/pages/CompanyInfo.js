@@ -21,6 +21,7 @@ function CompanyInfo({ company, confirm }) {
   const [positiveNum, setPositiveNum] = useState({});
   const [neutralNum, setNeutralNum] = useState({});
   const [negativeNum, setNegativeNum] = useState({});
+  const [closePriceInfo, setClosePriceInfo] = useState([]);
 
   const divRef = useRef(null);
 
@@ -94,22 +95,23 @@ function CompanyInfo({ company, confirm }) {
         console.log("SentimentNews", sentimentNews);
 
         console.log("news제목 요약 불러오기", response.data);
+        console.log("최신 뉴스 불러오기", response.data);
         setCnt(response.data.map((item) => item.cnt));
         setNewsId(response.data.map((item) => item.news_id));
         setNewsTitle(response.data.map((item) => item.news_title));
         setSummary(response.data.map((item) => item.summary));
         setSentiment(response.data.map((item) => item.sentiment));
         setPositiveNum(
-          response.data.filter((item) => item.sentiment === 2).length
+          response.data.filter((item) => item.sentiment == 2).length
         );
         setNeutralNum(
-          response.data.filter((item) => item.sentiment === 1).length
+          response.data.filter((item) => item.sentiment == 1).length
         );
         setNegativeNum(
-          response.data.filter((item) => item.sentiment === 0).length
+          response.data.filter((item) => item.sentiment == 0).length
         );
       } catch (err) {
-        console.log("news제목 요약 불러오기 에러");
+        console.log("최신 뉴스 불러오기 에러");
       }
     };
 
@@ -129,8 +131,26 @@ function CompanyInfo({ company, confirm }) {
         console.log("company info fetch error");
       }
     };
+
+    const fetchCompanyClosePrice = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/jh/get-company-close-price-90",
+          {
+            params: {
+              company_id: company ? company : company_id,
+            }
+          }
+        )
+        console.log("company close price: ", response.data)
+        setClosePriceInfo(response.data)
+      } catch (err) {
+        console.log("company close price fetch error")
+      }
+    }
+
     fetchGetNews();
     fetchCompanyInfo();
+    fetchCompanyClosePrice();
     setCompanyId(company);
     scrollToTop();
   }, [confirm]);
@@ -215,8 +235,12 @@ function CompanyInfo({ company, confirm }) {
             flexDirection: "column",
           }}
         >
-          <Grid>
-            <StockInfo companyInfo={companyInfo} companyId={companyId} />
+          <Grid >
+            <StockInfo
+              closePriceInfo={closePriceInfo}
+              companyInfo={companyInfo}
+              companyId={companyId}
+            />
           </Grid>
           <Grid>
             <SentimentInfo
