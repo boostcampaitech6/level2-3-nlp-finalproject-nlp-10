@@ -22,10 +22,10 @@ export default function CompanyRecentNews(props) {
           }}
         >
           <Typography variant="h7" sx={{ p: 1, fontWeight: "bold", fontFamily: "Noto Sans KR" }}>
-            "{props.newsTitle[idx]}"
+            {props.newsTitle[idx]}
           </Typography>
 
-          <Typography sx={{ pl: 2, fontFamily: "Noto Sans KR" }}>
+          <Typography sx={{ pl: 2, fontFamily: "Noto Sans KR", fontSize: "0.9rem" }}>
             {props.summary[idx]}
           </Typography>
           <Box

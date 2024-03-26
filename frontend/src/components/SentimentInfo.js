@@ -45,8 +45,6 @@ export default function SentimentInfo(props) {
     { label: "부정", value: props.NegativeNum, color: "#ed9568" },
   ];
 
-  data = data.filter((sentiment) => sentiment.value);
-
   return (
     <>
       <Box
