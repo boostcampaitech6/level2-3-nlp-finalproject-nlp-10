@@ -1,14 +1,7 @@
-from transformers import AutoTokenizer, BartForConditionalGeneration, AutoConfig, Trainer, TrainingArguments, set_seed
+from transformers import AutoTokenizer, BartForConditionalGeneration, TrainingArguments, set_seed
 import torch
-import pandas as pd
 import numpy as np
-import os
 import random
-from tqdm import tqdm, trange
-import json
-from data_load import load_dataset
-import torch.nn as nn
-import torch.optim as optim
 from training import training, validation
 import argparse
 from make_summary_dataframe import make_summary_data
@@ -23,8 +16,8 @@ torch.cuda.manual_seed_all(seed)
 training_args = TrainingArguments
 training_args.per_device_train_batch_size=12
 training_args.per_device_eval_batch_size=12
-training_args.learning_rate= 2e-05
-training_args.num_train_epochs=3
+training_args.learning_rate= 1.7e-05
+training_args.num_train_epochs=2
 
 if torch.cuda.is_available()==True:
     device = "cuda"
@@ -33,7 +26,7 @@ else:
 
 set_seed(seed)
 
-model_name = 'hyunwoongko/kobart'
+model_name = 'EbanLee/kobart-summary-v3'
 
 parser = argparse.ArgumentParser(description="")
 
@@ -44,21 +37,21 @@ parser.add_argument("--make_df", default='False', type=str, help='make summary f
 
 args = parser.parse_args()
 
+if args.use_local_model == 'True':
+    model = torch.load('../trained_model/model.pt')
+    tokenizer = AutoTokenizer.from_pretrained('../save_tokenizer')
+    print(f'\nLocal Model load Finish!\n')
+
+else: 
+    model = BartForConditionalGeneration.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    print(f'\nbase_model_name : {model_name}\n')
+
 if args.do_train == 'True': 
     print('!train_mode!')
-    tokenizer = AutoTokenizer.from_pretrained(model_name)   #토크나이저에 스페셜토큰을 추가하는 등의 일을 아래의 training함수 내부에서 한다면 따로 받아야함
-    model = training(training_args, model_name, device)
+    model = training(training_args, model, tokenizer, device)
     torch.save(model, '../trained_model/model.pt')
     print(f'Save Finish!')
-
-else : 
-    if args.use_local_model == 'True':
-        model = torch.load('../trained_model/model.pt')
-        print(f'\nLocal Model load Finish!\n')
-    
-    else: 
-        model = BartForConditionalGeneration.from_pretrained(model_name)
-        print(f'\nbase_model_name : {model_name}\n')
 
 if args.do_eval == 'True':
     print(f'Validation Start!')

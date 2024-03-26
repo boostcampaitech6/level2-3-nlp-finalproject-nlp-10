@@ -39,7 +39,7 @@ function NavBar(props) {
           <Tabs value={props.selectedTab} onChange={props.onClickTab} TabIndicatorProps={{ style: { background: '#54cc99' } }}>
             <Tab label="오늘의 기업 뉴스" value="0" />
             <Tab label="실시간 기업 정보" value="1" />
-            <Tab label="기업 리포트 생성" value="2" />
+            <Tab label="전일 리포트 생성" value="2" />
           </Tabs>
         </ThemeProvider>
       </Grid>

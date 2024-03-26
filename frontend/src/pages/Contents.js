@@ -7,6 +7,7 @@ import { Box } from "@mui/material";
 import NavBar from "../components/NavBar";
 import CompanyInfo from "./CompanyInfo";
 import Allnews from "./Allnews";
+import Report from './Report'
 import FilterTab from "../components/FilterTab";
 
 const styles = (theme) => ({
@@ -67,12 +68,13 @@ export default function Main() {
     <>
       <div className={styles.root} name="main">
         <NavBar selectedTab={value} onClickTab={handleChange} />
-        <FilterTab
+        {value != "2" && <FilterTab
           changeStartDate={handleChangeStartDate}
           changeEndDate={handleChangeEndDate}
           changeCompany={handleChangeCompany}
           changeConfirm={handleChangeConfirm}
-        />
+          tabNum={value}
+        />}
         {value == "0" && (
           <Allnews
             startDate={startDate}
@@ -84,13 +86,12 @@ export default function Main() {
         )}
         {value == "1" && (
           <CompanyInfo
-            startDate={startDate}
-            endDate={endDate}
             company={company}
             confirm={confirm}
+            tabNum={value}
           />
         )}
-        {value == "2" && <Box></Box>}
+        {value == "2" && <Report />}
       </div>
     </>
   );

@@ -1,14 +1,10 @@
-from transformers import AutoTokenizer, BartForConditionalGeneration, AutoConfig, Trainer, TrainingArguments, AutoFeatureExtractor, set_seed, AdamW
+from transformers import AutoTokenizer, AdamW
 import torch
 import pandas as pd
-import numpy as np
 import os
-import random
-from argparse import ArgumentParser
 from tqdm import tqdm, trange
-import json
 from data_load import load_dataset, pd_load_dataset, load_report_dataset
-from torch.utils.data import Dataset, DataLoader, TensorDataset, RandomSampler
+from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from make_dataset import make_dataset
 from rouge import Rouge
 
@@ -16,6 +12,7 @@ dataset_path = "../dataset"
 book_data_path = os.path.join(dataset_path, "book_sum")    #폴더 안에 하나의 문서당 하나의 json파일 있는 형태
 doc_data_path = os.path.join(dataset_path, "doc_sum")      #하나의 hson파일 안에 모든 문서 데이터들 있는 형태
 report_data_path = os.path.join(dataset_path, "report_sum")
+custom_data_path = os.path.join(dataset_path, "custom_data")
 book_train_dataset_path = os.path.join(book_data_path, "Training")
 doc_train_dataset_path = os.path.join(doc_data_path, "Training")
 report_train_dataset_path = os.path.join(report_data_path, "Training")
@@ -27,7 +24,7 @@ load_book_data = True
 load_doc_data = True
 load_report_data = True
 
-def training(args, model_name, device):
+def training(args, model, tokenizer, device):
     train_data = pd.DataFrame(columns = ['passage', 'summary'])
 
     if load_book_data==True:
@@ -38,7 +35,7 @@ def training(args, model_name, device):
         train_data = pd.concat([train_data, train_data1, train_data2, train_data3, train_data4], ignore_index=True)
         print(f"book_data_length = {len(train_data1) + len(train_data2) + len(train_data3) + len(train_data4)}")
     
-    if load_doc_data==True:        
+    if load_doc_data==True:
         train_data1 = pd_load_dataset(os.path.join(doc_train_dataset_path, "edit_training_dataset.json"))
         train_data2 = pd_load_dataset(os.path.join(doc_train_dataset_path, "law_training_dataset.json"))
         train_data3 = pd_load_dataset(os.path.join(doc_train_dataset_path, "paper_training_dataset.json"))
@@ -50,9 +47,7 @@ def training(args, model_name, device):
         train_data = pd.concat([train_data, train_data1], ignore_index=True)
         print(f"report_data_length = {len(train_data1)}")
 
-    model_config = AutoConfig.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = BartForConditionalGeneration.from_pretrained(model_name, config = model_config)
+    print(f"{len(train_data)=}")
 
     print(f'{train_data.columns=}')
     train_data = make_dataset(tokenizer, train_data['passage'], train_data['summary'])  #(input_ids, attention_mask, token_type_ids, overflow_to_sample_mapping)
@@ -97,10 +92,10 @@ def training(args, model_name, device):
             model.zero_grad()
         
             if global_step%1000==0:
-                print(f' {global_step=}, Loss={loss.item()}')
+                print(f' {global_step=}, Loss={loss.item():.7f}')
 
             global_step+=1
-        
+
         model.save_pretrained('../trained_model')
         tokenizer.save_pretrained('../save_tokenizer')
 
@@ -123,29 +118,59 @@ def validation(model, model_name, device):
     
     rouge = Rouge()
     model.to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
     context = valid_data['passage']
     target = valid_data['summary'].to_list()
     torch.cuda.empty_cache()
 
+    input_ids = []
+    attention_mask=[]
+    for c in tqdm(context.to_list()):
+        token = tokenizer(c, max_length=1026, truncation=True, padding="max_length")
+        input_ids.append(token['input_ids'])
+        attention_mask.append(token['attention_mask'])
+
+    dataset = TensorDataset(torch.tensor(input_ids), torch.tensor(attention_mask))
+    data_loader = DataLoader(dataset, shuffle=False, batch_size=32)
+
     with torch.no_grad():
         model.eval()
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
         outputs = []
-        for i in trange(len(context), desc='eval '):
-            token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+        for batch in tqdm(data_loader, desc='eval '):
             summary_text_ids = model.generate(
-                                    input_ids=token,
+                                    input_ids=batch[0].to(device),
+                                    attention_mask = batch[1].to(device),
                                     bos_token_id=tokenizer.bos_token_id,
                                     eos_token_id=tokenizer.eos_token_id,
-                                    length_penalty=2.0,
-                                    max_length=220,
+                                    length_penalty=1.5,
+                                    max_length=300,
                                     min_length=30,
                                     num_beams=6,
-                                    repetition_penalty=1.7,
+                                    repetition_penalty=1.5,
                                     ).to("cpu")
             
-            output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
-            outputs.append(output)
+            for out in summary_text_ids:
+                output = tokenizer.decode(out, skip_special_tokens=True)
+                outputs.append(output)
+
+    # with torch.no_grad():
+    #     model.eval()
+    #     outputs = []
+    #     for i in trange(len(context), desc='eval '):
+    #         token = tokenizer.encode(context[i], return_tensors='pt').to(device)
+    #         summary_text_ids = model.generate(
+    #                                 input_ids=token,
+    #                                 bos_token_id=tokenizer.bos_token_id,
+    #                                 eos_token_id=tokenizer.eos_token_id,
+    #                                 length_penalty=1.5,
+    #                                 max_length=300,
+    #                                 min_length=30,
+    #                                 num_beams=6,
+    #                                 repetition_penalty=1.5,
+    #                                 ).to("cpu")
+            
+    #         output = tokenizer.decode(summary_text_ids[0], skip_special_tokens=True)
+    #         outputs.append(output)
         
     score = rouge.get_scores(outputs, target, avg=True)
     for k in score.keys():
