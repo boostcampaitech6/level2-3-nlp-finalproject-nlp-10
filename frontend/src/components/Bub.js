@@ -64,7 +64,7 @@ const Bub = ({
   const [data, setData] = useState([
     {
       label: "SET FILTER",
-      value: 3,
+      value: 2,
       color: "#4EBF9A",
     },
   ]);
@@ -88,8 +88,8 @@ const Bub = ({
     // setData(diagram);
     const handleResize = () => {
       d3.select(containerRef.current).selectAll("*").remove();
-      const containerWidth = containerRef.current.offsetWidth - 50;
-      const containerHeight = containerRef.current.offsetHeight - 20;
+      const containerWidth = containerRef.current.offsetWidth;
+      const containerHeight = containerRef.current.offsetHeight;
 
       const chartContainer = d3.select(containerRef.current);
       chartContainer.select("svg").remove();
@@ -131,7 +131,7 @@ const Bub = ({
 
       circles
         .transition()
-        .duration(2000)
+        .duration(1000)
         .attr("r", (d) => d.r);
 
       const text = nodes
@@ -176,7 +176,7 @@ const Bub = ({
       //   .attr("dy", (d, i, nodes) => (i === 0 ? "0em" : "1.1em")) // 첫 줄은 0em, 그 이후부터는 1.1em
       //   .text((d) => d);
 
-      text.transition().duration(2000).style("opacity", 1);
+      text.transition().duration(1000).style("opacity", 1);
 
       console.log(
         d3
@@ -199,8 +199,8 @@ const Bub = ({
         .getClientRects()[0].height;
       //   console.log({ gWidth, gHeight });
 
-      const x = (containerWidth - gWidth) / 2;
-      const y = (containerHeight - gHeight) / 4;
+      const x = (containerWidth - gWidth) / 2.5;
+      const y = (containerHeight - gHeight) / 50;
 
       d3.select(".gcontainer").attr("transform", `translate(${x}, ${y})`);
     };
@@ -254,7 +254,7 @@ const Bub = ({
   return (
     <Box>
       <div className="bubble-chart-container">
-        <div ref={containerRef} style={{ height: "50vh" }} />
+        <div ref={containerRef} style={{ height: "39vh", width: "44vw" }} />
         <Tooltip />
       </div>
     </Box>

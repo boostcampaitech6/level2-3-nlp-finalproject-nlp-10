@@ -16,7 +16,7 @@ export default function TopNews(props) {
   let date = "최신";
   return (
     <>
-      <Box sx={{ display: "flex", pt: 2 }}>
+      <Box sx={{ display: "flex" }}>
         <IconContext.Provider value={{ size: "30px" }}>
           <TbArrowBadgeRightFilled color="#34b37d" />
         </IconContext.Provider>
@@ -33,7 +33,7 @@ export default function TopNews(props) {
       </Box>
 
       {/* 뉴스 기사 제목 */}
-      <List sx={{ height: "25vh", p: 1, pl: 2.5, listStyleType: "square" }}>
+      <List sx={{ height: "25vh", p: 1, pl: 5, listStyleType: "square" }}>
         {props.title.slice(0, 5).map((it, idx) => (
           <ListItem
             key={idx}
