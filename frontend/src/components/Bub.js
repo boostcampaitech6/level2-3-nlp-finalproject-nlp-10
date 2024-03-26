@@ -63,9 +63,9 @@ const Bub = ({
 }) => {
   const [data, setData] = useState([
     {
-      label: "SET FILTER",
+      label: "",
       value: 2,
-      color: "#4EBF9A",
+      color: "white",
     },
   ]);
 
@@ -101,11 +101,11 @@ const Bub = ({
 
       // Rest of your code...
       // ...
-      const padding = 20;
-      const diameter = Math.min(containerWidth, containerHeight) - padding;
+      // const padding = 0;
+      const diameter = Math.min(containerWidth, containerHeight);
       const format = d3.format(",d");
 
-      const bubble = d3.pack().size([diameter, diameter]).padding(1.5);
+      const bubble = d3.pack().size([diameter, diameter]).padding(1);
 
       const root = d3.hierarchy({ children: data }).sum((d) => d.value);
 
@@ -120,7 +120,7 @@ const Bub = ({
         .enter()
         .append("g")
         .attr("class", "node")
-        .attr("transform", (d) => `translate(${d.x},${d.y})`)
+        .attr("transform", (d) => `translate(${d.x * 1.5},${d.y})`)
         .on("mouseenter", handleMouseEnter)
         .on("mouseleave", handleMouseLeave);
 
@@ -144,8 +144,8 @@ const Bub = ({
         .attr("dy", ".3em")
         .style("text-anchor", "middle")
         .style("font-weight", "bold")
-        .style("color", "white")
-        .style("font-style", "Georgia")
+        .style("fill", "black")
+        .style("font-style", "Noto Sans KR")
         .style("opacity", 0)
         // .text((d) => d.data.label);
         .text((d) => d.data.label.slice(0, d.data.label.length / 2));
@@ -199,8 +199,8 @@ const Bub = ({
         .getClientRects()[0].height;
       //   console.log({ gWidth, gHeight });
 
-      const x = (containerWidth - gWidth) / 2.5;
-      const y = (containerHeight - gHeight) / 50;
+      const x = (containerWidth - gWidth) / 5;
+      const y = 0;
 
       d3.select(".gcontainer").attr("transform", `translate(${x}, ${y})`);
     };
