@@ -43,9 +43,6 @@ const rightInfoName = [
   "미국채권 5년물",
   "미국채권 10년물"
 ]
-const rightInfoUnit = [
-  "단", "위", "추", "가", "필", "요", "!"
-]
 
 export default function ReportContents(props) {
   return (
@@ -93,7 +90,7 @@ export default function ReportContents(props) {
               {rightInfoList.map((info, idx) => (
                 <ListItem container sx={{ p: 0, justifyContent: "center" }}>
                   <Typography sx={{ fontSize: "0.8rem" }}>
-                    {props.economyInfo[info] ? props.economyInfo[info].toLocaleString() : props.economyInfo[info]}
+                    {(props.economyInfo[info] == "-100") ? <span>—&nbsp;&nbsp;&nbsp;&nbsp;</span> : props.economyInfo[info] ? props.economyInfo[info].toLocaleString() : props.economyInfo[info]}
                   </Typography>
                 </ListItem>
               ))}
@@ -101,10 +98,10 @@ export default function ReportContents(props) {
             <List item sx={{ p: 0.5, display: "flex", flexDirection: "column" }}>
               {rightInfoList.map((info, idx) => (
                 <ListItem container sx={{ p: 0, justifyContent: "right" }}>
-                  <Typography sx={{ fontSize: "0.8rem", color: (props.economyUpdown[info + "_등락률"] < 0) ? "#ff5251" : (props.economyUpdown[info + "_등락률"] > 0) ? "#73d073" : "black" }}>
-                    {props.economyUpdown[info + "_등락률"] ? props.economyUpdown[info + "_등락률"] + rightInfoUnit[idx] : <span>—&nbsp;&nbsp;&nbsp;&nbsp;</span>}
+                  <Typography sx={{ fontSize: "0.8rem", color: (props.economyUpdown[info + "_등락률"] < 0) && (props.economyInfo[info] != "-100") ? "#ff5251" : (props.economyUpdown[info + "_등락률"] > 0) && (props.economyInfo[info] != "-100") ? "#73d073" : "black" }}>
+                    {(props.economyInfo[info] == "-100") ? <span>—&nbsp;&nbsp;&nbsp;&nbsp;</span> : props.economyUpdown[info + "_등락률"] ? props.economyUpdown[info + "_등락률"] + "%" : <span>—&nbsp;&nbsp;&nbsp;&nbsp;</span>}
                     {(props.economyUpdown[info + "_등락률"] > 0) && <RiArrowUpSFill color='#73d073' />}
-                    {(props.economyUpdown[info + "_등락률"] < 0) && <RiArrowDownSFill color='#ff5251' />}
+                    {(props.economyUpdown[info + "_등락률"] < 0) && (props.economyInfo[info] != "-100") && <RiArrowDownSFill color='#ff5251' />}
                   </Typography>
                 </ListItem>
               ))}

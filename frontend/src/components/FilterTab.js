@@ -24,24 +24,53 @@ export default function FilterTab({
 }) {
   const today = new Date();
   const companyNames = [
-    "삼성전자",
-    "SK하이닉스",
-    "LG에너지솔루션",
-    "기아",
-    "현대자동차",
-    "셀트리온",
-    "POSCO홀딩스",
-    "Naver",
-    "LG화학",
-    "삼성물산",
-    "삼성SDI",
-    "KB금융",
-    "카카오",
-    "신한지주",
-    "현대모비스",
-    "포스코퓨처엠",
-    "하나금융지주",
-    "LG전자",
+    '삼성전자',
+    'SK하이닉스',
+    'LG에너지솔루션',
+    '삼성바이오로직스',
+    '기아',
+    '현대차',
+    '셀트리온',
+    'POSCO홀딩스',
+    'NAVER',
+    'LG화학',
+    '삼성물산',
+    '삼성SDI',
+    'KB금융',
+    '카카오',
+    '신한지주',
+    '현대모비스',
+    '포스코퓨처엠',
+    '하나금융지주',
+    'LG전자',
+    '삼성생명',
+    '메리츠금융지주',
+    'LG',
+    'SK',
+    '삼성화재',
+    '카카오뱅크',
+    'HMM',
+    '한국전력',
+    'SK이노베이션',
+    'KT&G',
+    '삼성에스디에스',
+    '에코프로머티',
+    '우리금융지주',
+    'SK텔레콤',
+    '크래프톤',
+    '기업은행',
+    '삼성전기',
+    '두산에너빌리티',
+    'HD현대중공업',
+    '고려아연',
+    'KT',
+    '포스코인터내셔널',
+    '하이브',
+    '대한항공',
+    'HD한국조선해양',
+    'SK스퀘어',
+    'S-Oil',
+    '한화에어로스페이스'
   ];
 
   // const [startDate, setStartDate] = useState(dayjs(`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`));
@@ -133,25 +162,11 @@ export default function FilterTab({
                 value={company}
                 label="Company"
                 onChange={handleChangeCompany}
+                MenuProps={{ PaperProps: { sx: { maxHeight: 300 } } }}
               >
-                <MenuItem value={48}>삼성전자</MenuItem>
-                <MenuItem value={49}>SK하이닉스</MenuItem>
-                <MenuItem value={50}>LG에너지솔루션</MenuItem>
-                <MenuItem value={51}>기아</MenuItem>
-                <MenuItem value={52}>현대자동차</MenuItem>
-                <MenuItem value={53}>셀트리온</MenuItem>
-                <MenuItem value={54}>POSCO홀딩스</MenuItem>
-                <MenuItem value={55}>Naver</MenuItem>
-                <MenuItem value={56}>LG화학</MenuItem>
-                <MenuItem value={57}>삼성물산</MenuItem>
-                <MenuItem value={58}>삼성SDI</MenuItem>
-                <MenuItem value={59}>KB금융</MenuItem>
-                <MenuItem value={60}>카카오</MenuItem>
-                <MenuItem value={61}>신한지주</MenuItem>
-                <MenuItem value={62}>현대모비스</MenuItem>
-                <MenuItem value={63}>포스코퓨처엠</MenuItem>
-                <MenuItem value={64}>하나금융지주</MenuItem>
-                <MenuItem value={65}>LG전자</MenuItem>
+                {companyNames.map((company, idx) => (
+                  <MenuItem value={idx + 48}>{company}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>

@@ -59,11 +59,8 @@ export default function KeywordChart({
   ];
   const sizeHere = [68, 51, 15, 11, 11, 6, 7, 7, 5, 5];
   useEffect(() => {
-    const newDiagram = topicTitleSummary.slice(0, 8).map((title, index) => ({
-      label:
-        title.slice(0, title.length / 4) +
-        "\n" +
-        title.slice(title.length / 4, title.length / 2),
+    const newDiagram = topicTitleSummary.slice(0, 10).map((title, index) => ({
+      label: title,
       label2: title,
       value: cnt[index],
       color: colorHere[index],
@@ -86,6 +83,9 @@ export default function KeywordChart({
           }}
         >
           핵심 키워드
+        </Typography>
+        <Typography sx={{ pt: 1, fontFamily: "Noto Sans KR", fontStyle: "italic", fontSize: "0.8rem", color: "lightgray" }}>
+          &nbsp;기간과 종목을 선택해주세요
         </Typography>
       </Box>
 

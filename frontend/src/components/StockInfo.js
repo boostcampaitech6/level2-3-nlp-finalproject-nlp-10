@@ -7,24 +7,53 @@ import { FaCheckSquare } from "react-icons/fa";
 import "../css/font.css"
 
 const companyNames = [
-  "삼성전자",
-  "SK하이닉스",
-  "LG에너지솔루션",
-  "기아",
-  "현대자동차",
-  "셀트리온",
-  "POSCO홀딩스",
-  "Naver",
-  "LG화학",
-  "삼성물산",
-  "삼성SDI",
-  "KB금융",
-  "카카오",
-  "신한지주",
-  "현대모비스",
-  "포스코퓨처엠",
-  "하나금융지주",
-  "LG전자",
+  '삼성전자',
+  'SK하이닉스',
+  'LG에너지솔루션',
+  '삼성바이오로직스',
+  '기아',
+  '현대차',
+  '셀트리온',
+  'POSCO홀딩스',
+  'NAVER',
+  'LG화학',
+  '삼성물산',
+  '삼성SDI',
+  'KB금융',
+  '카카오',
+  '신한지주',
+  '현대모비스',
+  '포스코퓨처엠',
+  '하나금융지주',
+  'LG전자',
+  '삼성생명',
+  '메리츠금융지주',
+  'LG',
+  'SK',
+  '삼성화재',
+  '카카오뱅크',
+  'HMM',
+  '한국전력',
+  'SK이노베이션',
+  'KT&G',
+  '삼성에스디에스',
+  '에코프로머티',
+  '우리금융지주',
+  'SK텔레콤',
+  '크래프톤',
+  '기업은행',
+  '삼성전기',
+  '두산에너빌리티',
+  'HD현대중공업',
+  '고려아연',
+  'KT',
+  '포스코인터내셔널',
+  '하이브',
+  '대한항공',
+  'HD한국조선해양',
+  'SK스퀘어',
+  'S-Oil',
+  '한화에어로스페이스'
 ];
 const date = dayjs().format('YYYY.MM.DD')
 export default function StockInfo(props) {
@@ -41,9 +70,9 @@ export default function StockInfo(props) {
           <Box height={"38vh"}>
             <LineChart width={440} height={270} data={data} margin={{ top: 35, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" scale={"time"} interval={10} angle={10}
+              <XAxis dataKey="date" scale={"time"} interval={10}
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: '0.5rem',
                 }}
                 tickFormatter={(label) => dayjs(label).format("YYMMMDD")} />
               <YAxis type="number" domain={['auto', 'auto']}
