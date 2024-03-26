@@ -20,7 +20,7 @@ parser.add_argument("--make_file", default='False', type=str, help='make topic?'
 args = parser.parse_args()
 
 # HDBSCAN 실행
-def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=3, min_samples=3, method='eom'):
+def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=2, min_samples=None, method='eom'):
     cluster = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size,
                             min_samples=min_samples,
                             metric='euclidean',
@@ -30,12 +30,11 @@ def hdbscan_process(corpus, corpus_embeddings, min_cluster_size=3, min_samples=3
 
     docs_df = corpus
     docs_df['Topic'] = cluster.labels_
-    #print(Counter(cluster.labels_), '\n')
     
     return docs_df, cluster.labels_
 
-def dbscan_process(dataset, corpus_embeddings, eps=0.2, min_samples=2):
-    c_model = DBSCAN(eps=0.2, min_samples=min_samples, metric = "cosine")
+def dbscan_process(dataset, corpus_embeddings, eps=0.3, min_samples=2):
+    c_model = DBSCAN(eps=eps, min_samples=min_samples, metric = "cosine")
     result = c_model.fit_predict(corpus_embeddings)
     dataset['Topic']=result
     docs_df = dataset
@@ -54,7 +53,7 @@ def check_cluster(docs_df):
         if check_numeric(t_num):
             for idx in range(len(docs_df)):
                 if docs_df['Topic'].iloc[idx] == int(t_num):
-                    print(f"{idx}: {docs_df['datetime'].iloc[idx]}")
+                    print(f"{idx=}, news_id={docs_df['news_id'].iloc[idx]}: {docs_df['datetime'].iloc[idx]}")
                     print(f"{docs_df['summary'].iloc[idx]}\n")
 
         else : break
@@ -67,7 +66,7 @@ def check_date_format(date_string):
         return False
 
 
-if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일을 토픽만들어줄 때
+if args.make_cluster == 'True' or args.make_cluster == 'true':   #토픽숫자 달기 전인 파일을 토픽만들어줄 때
     print("make_Topic")
     dataset = pd.read_csv(os.path.join(no_topic_path, file_name))
     while(True):
@@ -75,45 +74,44 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
 
         if check_date_format(selected_date):
             sub_dataset = dataset[pd.to_datetime(dataset['datetime']).dt.date == pd.to_datetime(selected_date).date()]
-            sub_dataset = sub_dataset[sub_dataset['relate_stock'].apply(lambda x: '삼성전자' in x)]#############
+            # sub_dataset = sub_dataset[sub_dataset['relate_stock'].apply(lambda x: '삼성전자' in x)]
 
-        elif selected_date=='All' or 'ALL' or 'all':
+        elif (selected_date=='All' or selected_date=='ALL' or selected_date=='all'):
+            print("selected All!")
             sub_dataset = dataset
 
-        else :break
+        else :
+            print("exit!")
+            break
 
         embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), sub_dataset['embedding'].tolist()))
         sub_dataset['embedding'] = embeddings
 
         while(True):
             c_algo = input('클러스터링 알고리즘 선택(\'hdb\' : HDBSCAN, \'db\' : DBSCAN) :')
-            if c_algo == 'hdb' or 'HDB' or 'db' or 'DB':
+            if c_algo == 'hdb' or c_algo == 'HDB' or c_algo == 'db' or c_algo == 'DB': 
                 break
             else: print(f'다시 입력해주세요.')
         
-        print(f"{c_algo} start!")
+        print(f"\n{c_algo} start!")
 
         start_time = time.time()
-        if c_algo=='hdb' or 'HDB':   #뉴스 많을 때
+        if c_algo=='hdb' or c_algo=='HDB':   #뉴스 많을 때
             docs_df, result = hdbscan_process(sub_dataset, 
                                     embeddings,
-                                    method='leaf',    #가장 높은 밀도
-                                    min_cluster_size=3,
-                                    min_samples=3,
+                                    #method='leaf',    #가장 높은 밀도
+                                    min_cluster_size=2,
+                                    #min_samples=2,
                                     )
             
-        elif c_algo=='db' or 'DB':  #뉴스 적을 때
-            # c_model = DBSCAN(eps=0.2, min_samples=2, metric = "cosine")
-            # result = c_model.fit_predict(embeddings)
-            # sub_dataset['Topic']=result
-            # docs_df = sub_dataset
-            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.3, min_samples=2)
+        elif c_algo=='db' or c_algo=='DB':  #뉴스 적을 때
+            docs_df, result = dbscan_process(sub_dataset, embeddings, eps=0.27, min_samples=2)
 
         elapsed_time = time.time() - start_time
         print(f'duration : {elapsed_time}s\n')
 
         docs_df = docs_df.reset_index(drop=True)
-        print(docs_df.head())
+        print(docs_df[['title', 'summary', 'Topic']].head(15))
 
         # """클러스터들 평균 엠베딩 만들기(-1 제외)"""
         # cluster_embedding = defaultdict(list)
@@ -133,6 +131,7 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
         if args.make_file == 'True':
             docs_df.to_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
             # c_emb_df.to_csv(os.path.join(c_emb_path, f'cluster_embedding_{file_name}'))
+            print("make file finish")
 
         times = docs_df['datetime'].unique()
 
@@ -150,7 +149,7 @@ if args.make_cluster == 'True' or 'true':   #토픽숫자 달기 전인 파일�
 
 else:   #토픽숫자 달려있는 파일 불러와서 확인할 때
     print("read_TopicData")
-    docs_df = pd.read_csv(os.path.join(add_topic_path, f'add_Topic_{file_name}'))
+    docs_df = pd.read_csv(os.path.join(add_topic_path, f'add_Topic_add_embedding_Sum_FIN_NEWS_SUMMARY_None.csv'))
     cluster_labels = Counter(docs_df['Topic'].to_list())
     embeddings = list(map(lambda x : list(map(lambda y : float(y), x[1:-1].split(','))), docs_df['embedding'].tolist()))
 
@@ -159,4 +158,6 @@ else:   #토픽숫자 달려있는 파일 불러와서 확인할 때
     print(f'\nstart ~ end : {times[0]} ~ {times[-1]}')
     print(f'num_docs : {len(embeddings)}')
 
+    print(docs_df[['title', 'summary', 'Topic']].head(15))
+    
     check_cluster(docs_df)

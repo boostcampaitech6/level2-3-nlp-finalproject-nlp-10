@@ -6,7 +6,6 @@ import pandas as pd
 import rank_bm25
 from rank_bm25 import BM25Okapi
 from sklearn.preprocessing import StandardScaler
-import konlpy
 from konlpy.tag import Okt, Hannanum, Kkma
 
 #news = pd.read_csv('news.csv')
