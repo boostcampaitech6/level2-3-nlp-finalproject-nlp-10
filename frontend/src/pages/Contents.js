@@ -7,6 +7,7 @@ import { Box } from "@mui/material";
 import NavBar from "../components/NavBar";
 import CompanyInfo from "./CompanyInfo";
 import Allnews from "./Allnews";
+import Report from './Report'
 import FilterTab from "../components/FilterTab";
 
 const styles = (theme) => ({
@@ -85,13 +86,12 @@ export default function Main() {
         )}
         {value == "1" && (
           <CompanyInfo
-            startDate={startDate}
-            endDate={endDate}
             company={company}
             confirm={confirm}
+            tabNum={value}
           />
         )}
-        {value == "2" && <Box></Box>}
+        {value == "2" && <Report />}
       </div>
     </>
   );
