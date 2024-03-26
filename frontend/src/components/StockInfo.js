@@ -26,7 +26,6 @@ const companyNames = [
   "하나금융지주",
   "LG전자",
 ];
-
 const date = dayjs().format('YYYY.MM.DD')
 export default function StockInfo(props) {
   // console.log("dict: ", props.closePriceInfo[1].map((price, idx) => { return { "date": new Date(props.closePriceInfo[0][idx].split('-')), "price": price } }))

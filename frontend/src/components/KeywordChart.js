@@ -73,7 +73,7 @@ export default function KeywordChart({
   }, [title]);
   return (
     <>
-      <Box sx={{ display: "flex", mt: 3 }}>
+      <Box sx={{ display: "flex", mt: 2 }}>
         <IconContext.Provider value={{ size: "30px" }}>
           <TbArrowBadgeRightFilled color="#34b37d" />
         </IconContext.Provider>
@@ -92,7 +92,7 @@ export default function KeywordChart({
       <Box sx={{ p: 1, pb: 3 }}>
         <Box
           sx={{
-            minHeight: "10rem",
+            height: "39vh",
             // borderRadius: "20px",
             // border: "5px solid rgb(218, 248, 240)",
             border: "2px solid #54cc99",

@@ -18,9 +18,9 @@ function CompanyInfo({ company, confirm }) {
   const [sentiment, setSentiment] = useState([]);
   const [companyId, setCompanyId] = useState(48);
   const [companyInfo, setCompanyInfo] = useState({});
-  const [positiveNum, setPositiveNum] = useState({});
-  const [neutralNum, setNeutralNum] = useState({});
-  const [negativeNum, setNegativeNum] = useState({});
+  const [positiveNum, setPositiveNum] = useState();
+  const [neutralNum, setNeutralNum] = useState();
+  const [negativeNum, setNegativeNum] = useState();
   const [closePriceInfo, setClosePriceInfo] = useState([]);
 
   const divRef = useRef(null);
@@ -94,23 +94,17 @@ function CompanyInfo({ company, confirm }) {
         setSentimentNews(classifyBySentiment(response.data));
         console.log("SentimentNews", sentimentNews);
 
-        console.log("news제목 요약 불러오기", response.data);
         console.log("최신 뉴스 불러오기", response.data);
         setCnt(response.data.map((item) => item.cnt));
         setNewsId(response.data.map((item) => item.news_id));
         setNewsTitle(response.data.map((item) => item.news_title));
         setSummary(response.data.map((item) => item.summary));
         setSentiment(response.data.map((item) => item.sentiment));
-        setPositiveNum(
-          response.data.filter((item) => item.sentiment == 2).length
-        );
-        setNeutralNum(
-          response.data.filter((item) => item.sentiment == 1).length
-        );
-        setNegativeNum(
-          response.data.filter((item) => item.sentiment == 0).length
-        );
+        setPositiveNum(response.data.filter((item) => item.sentiment === 2).length);
+        setNeutralNum(response.data.filter((item) => item.sentiment === 1).length);
+        setNegativeNum(response.data.filter((item) => item.sentiment === 0).length);
       } catch (err) {
+        console.log("최신 뉴스 불러오기 에러");
         console.log("최신 뉴스 불러오기 에러");
       }
     };

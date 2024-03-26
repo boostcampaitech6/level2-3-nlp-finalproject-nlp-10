@@ -47,20 +47,8 @@ export default function KeywordDetail(props) {
   fetchNewsImage();
   return (
     <>
-      <Box height={"100%"}>
-        <Box height={"92%"}>
-          {/* <Box sx={{ p: 1.5, position: "relative" }}>
-            <Box
-              component="img"
-              src={titleBackground}
-              sx={{ objectFit: "cover", width: "100%", height: "100%" }}
-            />
-            <Box sx={{ fontFamily: "GmarketSansMedium", fontWeight: "bold", textAlign: "center", position: 'absolute', top: 30, justifyContent: 'center', alignItems: 'center', width: "90%" }}>
-              <Typography sx={{ fontFamily: "GmarketSansMedium", fontWeight: "bold", textAlign: "center", position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
-                " {props.title[props.titleId]} "
-              </Typography>
-            </Box>
-          </Box> */}
+      <Box height={"77vh"}>
+        <Box height={"75vh"}>
           <Box sx={{ p: 1.5, position: "relative" }}>
             <CardMedia
               component="img"
@@ -76,7 +64,7 @@ export default function KeywordDetail(props) {
               transform: "translate(-50%, -25%)",
             }}
             >
-              <Typography sx={{ fontFamily: "GmarketSansMedium", fontSize: (props.title[props.titleId] && (props.title[props.titleId].length < 35)) ? "1rem" : "0.9rem", fontWeight: "bold", textAlign: "center", position: 'relative', }}>
+              <Typography sx={{ fontFamily: "GmarketSansMedium", fontSize: (props.title[props.titleId] && (props.title[props.titleId].length < 35)) ? "1rem" : (props.title[props.titleId] && (props.title[props.titleId].length < 43)) ? "0.9rem" : "0.8rem", fontWeight: "bold", textAlign: "center", position: 'relative', }}>
 
                 <MdFormatQuote style={{ transform: 'rotate(180deg)' }} /> {props.title[props.titleId]} <MdFormatQuote />
               </Typography>
@@ -88,7 +76,7 @@ export default function KeywordDetail(props) {
                 <SlArrowLeft color="lightgray" />
               </IconContext.Provider>
             </Button>
-            <Box sx={{ height: "40vh", margin: "auto", display: "block", padding: 3, }}>
+            <Box sx={{ height: "35vh", margin: "auto", display: "block", p: 1, }}>
               {/* 요약 뉴스 이미지 */}
               <Box
                 component="img"
@@ -102,28 +90,8 @@ export default function KeywordDetail(props) {
               </IconContext.Provider>
             </Button>
           </Grid>
-          {/* 키워드 */}
-          {/* <Grid container>
-            {tags.map((tag, idx) => (
-              <Box key={idx} sx={{ pr: 2 }}>
-                <Chip label={`# ${tag}`}
-                  variant='outlined'
-                  size='small'
-                  sx={{
-                    fontFamily: "GmarketSansMedium",
-                    textAlign: "center",
-                    fontSize: "0.7rem",
-                    bgcolor: "#f2f7fb",
-                    borderColor: "#e0e2e4",
-                    borderWidth: "1.5px"
-                  }}
-                />
-              </Box>
-            ))}
-          </Grid> */}
-          {/* 뉴스 요약 */}
-          <List sx={{ height: "40vh", pl: 2.5, listStyleType: 'square' }}>
-            <ListItem sx={{ display: 'list-item', p: 1, fontSize: "1rem", fontFamily: "Noto Sans KR" }}                  >
+          <List sx={{ height: "24vh", pl: 2.5, listStyleType: 'square' }}>
+            <ListItem sx={{ display: 'list-item', p: 1, fontSize: "0.95rem", fontFamily: "Noto Sans KR" }}                  >
               {props.topicSummary[props.titleId]}
             </ListItem>
           </List>

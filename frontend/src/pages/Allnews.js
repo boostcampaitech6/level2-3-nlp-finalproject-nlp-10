@@ -91,9 +91,11 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
           item
           sx={{
             width: { sm: "100%", md: "50%" },
+            height: "83vh",
             display: "flex",
             flexDirection: "column",
-            p: 4,
+            p: 3,
+            pt: 4,
             borderRight: { md: "1px solid lightgray" },
           }}
         >
@@ -125,7 +127,7 @@ function Allnews({ startDate, endDate, company, confirm, startTitleId }) {
           item
           sx={{
             width: { sm: "100%", md: "50%" },
-            p: 4,
+            p: 3,
           }}
         >
           <NewsDetail
