@@ -3,7 +3,7 @@
 # Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
 
 <p align="center">
-  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/68c3cc84-b81b-41c3-a9cf-2d670204e8dd">
+  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/219bafab-76e1-4b25-aead-f00a281b6bc6">
 </p>
 
 
