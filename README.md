@@ -15,33 +15,15 @@
 ✅여러 경제 지표와 기업별 주요 토픽을 정리한 일일 리포트를 제공합니다.  
 
 
-## Fin-GPT
+## Fin-GPT 팀 소개 및 역할
 <div align='center'>
 
 |권예진 [<img src="img/github-mark.png" width="20" style="vertical-align:middle;">](https://github.com/Becky-Kwon)|문지원 [<img src="img/github-mark.png" width="20" style="vertical-align:middle;">](https://github.com/jwmooon)|방제형 [<img src="img/github-mark.png" width="20" style="vertical-align:middle;">](https://github.com/BJH9)|이경재 [<img src="img/github-mark.png" width="20" style="vertical-align:middle;">](https://github.com/EbanLee)|이종원 [<img src="img/github-mark.png" width="20" style="vertical-align:middle;">](https://github.com/jongwoncode)|
 |:-:|:-:|:-:|:-:|:-:|
 |<img src='img/예진 사진2.jpg' height=160 width=125></img>|<img src='img/지원 사진.png' height=160 width=125></img>|<img src='img/제형 사진.png' height=160 width=125></img>|<img src='img/경재_사진.png' height=160 width=125></img>|<img src='img/종원 사진.png' height=160 width=125></img>|
+|DB ERP 설계<br>DB 구축 및 관리<br>데이터 수집<br>웹 페이지 디자인<br>백엔드 API 개발<br>발표 자료 제작|프론트엔드 개발<br>API 연동<br>감성분석 모델 학습<br>웹 페이지 디자인|DB ERP 설계<br>DB 구축 및 관리<br>백엔드API 개발<br>프론트엔드 개발<br>API 연동|EC2 서버 구축<br>학습데이터조사<br>요약모델 학습 및 개선<br>요약문 임베딩<br>클러스터링<br>토픽생성 기획 및 구현|PM<br>DB ERP 설계<br>Data Pipeline 구축<br>자동화 과정 설계<br>요약 모델 학습|
 
 </div>
-
-## 역할 분담
-
-<div align='center'>
-
-
-|팀원| 역할 |
-|:---:| --- |
-|  권예진  | DB ERP 설계, DB 구축 및 관리, 데이터 수집, 웹 페이지 디자인, 백엔드 API 개발, 발표 자료 제작 |
-|  문지원  | 프론트엔드 개발, API 연동, 감성분석 모델 학습, 웹 페이지 디자인 |
-|  방제형  | DB ERP 설계, DB 구축 및 관리, 백엔드API 개발, 프론트엔드 개발, API 연동 |
-|  이경재  | EC2 서버 구축, 학습데이터조사, 요약모델 학습 및 개선, 요약문 임베딩, 클러스터링, 토픽생성 기획 및 구현 |
-|  이종원  | PM, DB ERP 설계, Data Pipeline 구축, 자동화 과정 설계, 요약 모델 학습 |
-
-</div>
-
-
-
-
 
 ## 프로젝트 구조도
 
