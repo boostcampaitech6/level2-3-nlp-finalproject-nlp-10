@@ -4,12 +4,10 @@
 
 <p align="center">
   <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/219bafab-76e1-4b25-aead-f00a281b6bc6">
+  <div style="text-align: center"> 본 프로젝트는 네이버커넥츠재단 부스트캠프 AI Tech 6기의 최종 프로젝트입니다. <br>개발 방법과 실제 시연 영상 올려두었으니 ReadMe 모두 확인 바랍니다.<br>2달이 안되는 sprint 개발에 성실히 참여한 우리 Fin-GPT 팀 다시 한 번 수고 많으셨습니다. </div>
+
 </p>
 
-
-본 프로젝트는 네이버커넥츠재단 부스트캠프 AI Tech 6기의 최종 프로젝트입니다.  
-개발 방법과 실제 시연 영상 올려두었으니 ReadMe 모두 확인 바랍니다.  
-2달이 안되는 sprint 개발에 성실히 참여한 우리 Fin-GPT 팀 다시 한 번 수고 많으셨습니다.
 
 # 1. 프로젝트 개요 
 ## 1.1. 프로젝트 소개
