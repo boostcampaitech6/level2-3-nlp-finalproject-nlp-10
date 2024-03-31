@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from schema.request import Topic_titles_request, Topic_id_request
 from schema.response import Topic_titles_response
 from schema.dto import Topic_title_dto, Topic_titles_dto
-from service.service_jh import Service_jh
-from repository.repository_jh import Repository_jh
+from backend.src.service.service import Service_jh
+from backend.src.repository.repository import Repository_jh
 from database.orm import Topic, Topic_summary, News_topic, News, Summary, Sentiment
 from typing import List, Tuple
 from collections import Counter

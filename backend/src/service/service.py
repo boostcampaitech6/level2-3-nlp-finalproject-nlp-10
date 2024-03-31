@@ -1,4 +1,4 @@
-from repository.repository_jh import Repository_jh
+from backend.src.repository.repository import Repository_jh
 from schema.request import Topic_titles_request
 from schema.dto import Topic_title_dto, Topic_titles_dto
 from fastapi import Depends 
