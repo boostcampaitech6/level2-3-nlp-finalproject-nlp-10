@@ -3,7 +3,7 @@
 # Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
 
 <p align="center">
-  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/93b98e32-68f5-4354-8c20-6cf7de850c33">
+  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/1ef34890-df9f-4c24-ad45-0e65c0b3fe8d">
 </p>
 
 <div align='center'>
@@ -310,7 +310,7 @@ FastAPI와  React, Node.js를 활용하여 웹서버를 구현했습니다.
 ## 4.2 최종 시연 영상
 ### 최종 시연 영상
 <p align="center">
-  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/7393a479-50a7-4639-b00c-e9d32b3ed670">
+  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/1ef34890-df9f-4c24-ad45-0e65c0b3fe8d">
 </p>
 
 
