@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=250&section=header&text=Hello!%20We're%20Fin-GPT!&fontSize=80&animation=fadeIn)
+![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=250&width=5000&section=header&text=Hello!%20We're%20Fin-GPT!&fontSize=80&animation=fadeIn)
 
 # Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
 
@@ -29,7 +29,7 @@
 
 <div align='center'>
 
-<img src='img/프로젝트 구조도.png'></img>
+<img src='img/구조도.png'></img>
 
 </div>
 
