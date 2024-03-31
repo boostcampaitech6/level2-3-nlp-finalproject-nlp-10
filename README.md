@@ -56,13 +56,13 @@
 
 ### 소프트웨어 및 라이브러리
 ```
-
-
-보안 필요
-pandas==1.1.5
-scikit-learn~=0.24.1
-transformers==4.10.0
-torch==1.10.0
+pytorch : 1.13.0+cu117
+sklearn': 1.4.0
+sentence_transformers : 2.5.1
+transformers' : 4.38.2
+hdbscan : 0.8.33
+numpy : 1.26.0
+pandas : 2.2.0 
 ```
 
 ### GitHub
