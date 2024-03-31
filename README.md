@@ -1,7 +1,11 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=250&width=5000&section=header&text=Hello!%20We're%20Fin-GPT!&fontSize=80&animation=fadeIn)
 
 # Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
-  
+
+<p align="center">
+  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/68c3cc84-b81b-41c3-a9cf-2d670204e8dd">
+</p>  
+
 본 프로젝트는 네이버커넥츠재단 부스트캠프 AI Tech 6기의 최종 프로젝트입니다.  
 개발 방법과 실제 시연 영상 올려두었으니 ReadMe 모두 확인 바랍니다.  
 2달이 안되는 sprint 개발에 성실히 참여한 우리 Fin-GPT 팀 다시 한 번 수고 많으셨습니다.
@@ -299,16 +303,12 @@ ERD 설계 과정에서 DB 정규화를 통해 데이터 구조의 안정성과 
 # 4. 프로젝트 구현
 ## 4.1. 개발 프레임워크
 
+
 ## 4.2 최종 시연 영상
+<p align="center">
+  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/68c3cc84-b81b-41c3-a9cf-2d670204e8dd">
+</p>
 
 
 
 
-
-
-
-
-![](./img/슬라이드34.PNG)
-![](./img/슬라이드35.PNG)
-![](./img/슬라이드36.PNG)
-![](./img/슬라이드37.PNG)
