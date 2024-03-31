@@ -36,15 +36,20 @@
 ## 개발/협업 환경
 
 ### 하드웨어
-> **Tesla V100 32GB** * 5EA
+> **Tesla V100 32GB** * 5EA <br> **AWS EC2 사양 모름** * 1EA
+
 
 ### 소프트웨어 및 라이브러리
 ```
+
+
+보안 필요
 pandas==1.1.5
 scikit-learn~=0.24.1
 transformers==4.10.0
 torch==1.10.0
 ```
+
 ### GitHub
 현업에서 진행하는 방식을 최대한 따르려고 노력했습니다. 이슈와 PR 템플릿을 작성하고, 팀 내의 커밋 컨벤션 규칙을 작성하여 후에 봐도 통일된 모습으로 쉽게 변경 사항을 찾을 수 있도록 했습니다. 기본 템플릿을 main 브랜치로 둔 뒤에, dev 브랜치에서 개발을 진행하였습니다. dev 브랜치에서도 새로운 기능을 개발할 때는 새로운 브랜치로 분기를 만들어 진행한 뒤 작성이 끝나면 dev 브랜치로 Pull Request를 작성하고, 팀원의 리뷰를 받은 뒤 병합을 진행하였습니다.
 
@@ -54,60 +59,173 @@ torch==1.10.0
 
 ### 프로젝트 템플릿
 주어진 Baseline 코드는 모델, 데이터로더, 학습까지 하나의 파일에 전부 작성되어 있었습니다. 앞으로 진행할 다른 대회에도 사용할 수 있도록 프로젝트 템플릿을 작성하여 그에 맞게 모듈화하여 구획하였습니다. 디렉토리는 원활한 실험을 위한 설정 파일을 담은 config, 학습, 검증, 평가, 증강 데이터를 담은 data, 학습이 끝난 모델과 inference 결과를 저장하는 output, 학습된 모델의 파라미터를 저장하는 checkpoint, Jupyter Notebook 작업을 수행하는 notebook, 데이터 전처리와 증강 등 다양한 곳에 사용한 모듈을 저장하는 utils으로 구분했습니다. 
+
 ```
-📦 level2-klue-nlp-10-RelationExtraction
+📦 level2-3-nlp-finalproject-nlp-10
 ├─ .github
-│  ├─ .keep
-│  ├─ ISSUE_TEMPLATE
-│  │  ├─ bug_report.md
-│  │  ├─ experiment.md
-│  │  └─ feature_request.md
-│  └─ PULL_REQUEST_TEMPLATE.md
+│  └─ .keep
+├─ .gitignore
 ├─ README.md
-├─ code
-│  ├─ .DS_Store
-│  ├─ augmentation.py
-│  ├─ best_model
-│  │  └─ .ipynb_checkpoints
-│  │     └─ empty.txt
-│  ├─ custom_trainer.py
-│  ├─ data_analysis.py
-│  ├─ datasets.py
-│  ├─ dict_label_to_num.pkl
-│  ├─ dict_num_to_label.pkl
-│  ├─ ensemble.py
-│  ├─ inference.py
-│  ├─ logs
-│  │  └─ empty.txt
-│  ├─ loss_function.py
-│  ├─ metrics.py
-│  ├─ model.py
-│  ├─ prediction
-│  │  ├─ .ipynb_checkpoints
-│  │  │  └─ sample_submission-checkpoint.csv
-│  │  └─ sample_submission.csv
+├─ backend
+│  └─ src
+│     ├─ __pycache__
+│     │  └─ main.cpython-311.pyc
+│     ├─ api
+│     │  ├─ __init__.py
+│     │  ├─ __pycache__
+│     │  │  ├─ company_api.cpython-311.pyc
+│     │  │  ├─ news_api.cpython-311.pyc
+│     │  │  └─ topic_api.cpython-311.pyc
+│     │  ├─ api.py
+│     │  ├─ company_api.py
+│     │  ├─ news_api.py
+│     │  └─ topic_api.py
+│     ├─ database
+│     │  ├─ __init__.py
+│     │  ├─ __pycache__
+│     │  │  ├─ connection.cpython-311.pyc
+│     │  │  └─ orm.cpython-311.pyc
+│     │  ├─ connection.py
+│     │  └─ orm.py
+│     ├─ main.py
+│     ├─ must_read.txt
+│     ├─ repository
+│     │  ├─ company_repository.py
+│     │  ├─ news_repository.py
+│     │  ├─ repository.py
+│     │  └─ topic_repository.py
+│     ├─ schema
+│     │  ├─ __init__.py
+│     │  ├─ dto.py
+│     │  ├─ request.py
+│     │  └─ response.py
+│     └─ service
+│        ├─ company_service.py
+│        ├─ news_service.py
+│        ├─ service.py
+│        └─ topic_service.py
+├─ data
+│  ├─ crawling.py
+│  ├─ engine.py
+│  ├─ engine_macro.py
+│  ├─ log
+│  │  └─ log.txt
 │  ├─ preprocessing.py
-│  ├─ requirements.txt
-│  ├─ results
-│  │  └─ empty.txt
-│  ├─ split_data.py
-│  ├─ train.py
-│  └─ utils.py
-└─ img
+│  └─ utils
+│     ├─ company.csv
+│     └─ krxlist.csv
+├─ frontend
+│  ├─ .gitignore
+│  ├─ README.md
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ public
+│  │  ├─ favicon.ico
+│  │  ├─ index.html
+│  │  ├─ logo192.png
+│  │  ├─ logo512.png
+│  │  ├─ manifest.json
+│  │  └─ robots.txt
+│  └─ src
+│     ├─ App.js
+│     ├─ Router.js
+│     ├─ api
+│     │  └─ AllnewsApi.js
+│     ├─ components
+│     │  ├─ App.css
+│     │  ├─ Bu.js
+│     │  ├─ Bub.js
+│     │  ├─ Bubble.js
+│     │  ├─ CompanyRecentNews.js
+│     │  ├─ Example.js
+│     │  ├─ FilterTab.js
+│     │  ├─ KeywordChart.js
+│     │  ├─ NavBar.js
+│     │  ├─ NewsDetail.js
+│     │  ├─ ReportCompanyTopic.js
+│     │  ├─ ReportEconomyInfo.js
+│     │  ├─ SentimentInfo.js
+│     │  ├─ StockInfo.js
+│     │  ├─ TopNews.js
+│     │  ├─ c.js
+│     │  └─ sq.js
+│     ├─ css
+│     │  ├─ font.css
+│     │  ├─ layout.css
+│     │  └─ style.css
+│     ├─ img
+│     │  ├─ diagram.png
+│     │  ├─ liveLogo.png
+│     │  ├─ samsung.png
+│     │  └─ titleBackground.png
+│     ├─ index.js
+│     └─ pages
+│        ├─ Allnews.js
+│        ├─ CompanyInfo.js
+│        ├─ Companynews.js
+│        ├─ Contents.js
+│        ├─ Main.js
+│        └─ Report.js
+├─ img
+├─ model
+│  ├─ clustering
+│  │  ├─ code
+│  │  │  ├─ dense_clustering.py
+│  │  │  ├─ sparse_clustering.ipynb
+│  │  │  ├─ sparse_clustering.py
+│  │  │  └─ test.py
+│  │  └─ read_me.txt
+│  ├─ embedding
+│  │  ├─ code
+│  │  │  ├─ embed.py
+│  │  │  └─ test.py
+│  │  └─ read_me.txt
+│  ├─ sentiment_analysis
+│  │  └─ code
+│  │     ├─ sentiment_prediction.py
+│  │     └─ sentiment_train.py
+│  ├─ subject
+│  │  ├─ code
+│  │  │  ├─ data_load.py
+│  │  │  ├─ make_dataset.py
+│  │  │  ├─ prepocess.py
+│  │  │  ├─ test.py
+│  │  │  ├─ train.py
+│  │  │  └─ vaildation.py
+│  │  └─ read_me.txt
+│  └─ summary
+│     └─ code
+│        ├─ data_load.py
+│        ├─ make_dataset.py
+│        ├─ make_summary_dataframe.py
+│        ├─ preprocess.py
+│        ├─ summary.py
+│        ├─ test.py
+│        └─ training.py
+└─ requirements.txt
 ```
+©generated by [Project Tree Generator](https://woochanleee.github.io/project-tree-generator)
+
 
 ## 프로젝트 로드맵
 
 <div align='center'>
 
-<img src='img/프로젝트 로드맵.png'></img>
+<img src='img/로드맵2.PNG'></img>
+<img src='img/로드맵3.PNG'></img>
 
 </div>
 
 <br>
 
-## 데이터 
+## 데이터 수집 및 DB 구축
 ### Label 별 데이터셋 특징
+
+
+
+
+
+
 
 
 
