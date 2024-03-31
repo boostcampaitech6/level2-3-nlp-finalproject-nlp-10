@@ -2,9 +2,7 @@
 
 # Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
 
-<p align="center">
-  <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/68c3cc84-b81b-41c3-a9cf-2d670204e8dd">
-</p>  
+
 
 본 프로젝트는 네이버커넥츠재단 부스트캠프 AI Tech 6기의 최종 프로젝트입니다.  
 개발 방법과 실제 시연 영상 올려두었으니 ReadMe 모두 확인 바랍니다.  
@@ -302,12 +300,28 @@ ERD 설계 과정에서 DB 정규화를 통해 데이터 구조의 안정성과 
 
 # 4. 프로젝트 구현
 ## 4.1. 개발 프레임워크
+FastAPI와  React, Node.js를 활용하여 웹서버를 구현했습니다.
+
+<div align='center'>
+<img src='img/웹개발방법론.png' style="width:770px; height:300px;"></img>
+</div>
 
 
 ## 4.2 최종 시연 영상
+### 최종 시연 영상
 <p align="center">
   <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/68c3cc84-b81b-41c3-a9cf-2d670204e8dd">
 </p>
+
+
+### 서비스 구성
+**1️⃣ 오늘의 기업 뉴스** <br>
+: 토픽 별로 묶어서 요약한 상위 5개의 뉴스와 핵심 키워드, 각 뉴스의 상세 내용을 보여줍니다. 특정 일자 및 기업명을 선택하여 뉴스를 조회할 수 있습니다.<br>
+**2️⃣ 실시간 기업 정보** <br>
+: 토픽으로 묶이지 않은 개별 뉴스와 요약문을 최신순으로 보여줍니다. 기업별로 주가 현황 및 긍부정 뉴스의 비율을 함께 보여줍니다.<br>
+**3️⃣ 전일 리포트 생성** <br>
+: 전일 하루치의 경제지표와 함께 기업별로 주요한 토픽들을 정리한 일일 리포트를 보여줍니다.<br>
+
 
 
 
