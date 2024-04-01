@@ -1,6 +1,6 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=250&width=5000&section=header&text=Hello!%20We're%20Fin-GPT!&fontSize=80&animation=fadeIn)
 
-# Lv.3 NLP-10 (Fin-GPT) : 뇌뺴고 경제 뉴스 읽기 프로젝트
+# Lv.3 NLP-10 (Fin-GPT) : 뇌빼고 경제 뉴스 읽기 프로젝트
 
 <p align="center">
   <img src="https://github.com/boostcampaitech6/level2-3-nlp-finalproject-nlp-10/assets/59564626/1ef34890-df9f-4c24-ad45-0e65c0b3fe8d">
